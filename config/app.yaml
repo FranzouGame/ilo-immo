@@ -1,0 +1,107 @@
+# Configuration centrale. Rien d'autre n'est codé en dur : département, seuils, pondérations, sources.
+# Surcharge possible : variable d'environnement DEPARTMENT, ou CONFIG_PATH vers un autre fichier.
+department: "91"
+department_name: Essonne
+bbox: [1.90, 48.27, 2.58, 48.78]   # lon_min, lat_min, lon_max, lat_max (cadre du département)
+map: {center: [2.25, 48.52], zoom: 10}
+
+view:                        # voir docs/calculs.md
+  floor_height_m: 2.7        # altitude fenêtre = sol + étage × 2,7
+  eye_height_m: 1.5
+  radius_m: 300
+  rays_per_sector: 7
+  vis_a_vis_ref_distance_m: 50
+  tall_floor_threshold: 4    # « en hauteur » si étage >= seuil
+  green_radius_m: 800
+  road_distance_m: 150
+  rail_distance_m: 250
+  industrial_distance_m: 300
+  walk_detour_factor: 1.3    # distance à pied ≈ vol d'oiseau × facteur
+  poi_weights: {park: 12, forest: 18, water: 15}
+  max_bonus: 35
+  max_malus: 35
+
+scoring:
+  missing_value_score: 0.5   # valeur inconnue : neutre, jamais d'exclusion
+  manual_weight_boost: 1.5   # une note manuelle pèse plus que l'estimation
+  widen_margin: 0.15         # mode « élargir » : tolérance sur les filtres durs
+  # kind : range (min/ideal/acceptable) | bool | set (valeurs préférées)
+  # ideal/acceptable : [min, max], null = ouvert. weight = importance par défaut (0-5).
+  criteria:
+    - {key: price, label: Prix (€), kind: range, field: price, ideal: [null, 300000], acceptable: [null, 380000], weight: 3}
+    - {key: market_gap, label: Écart au marché DVF (%), kind: range, field: computed.market_gap_pct, ideal: [null, -5], acceptable: [null, 10], weight: 2}
+    - {key: surface, label: Surface (m²), kind: range, field: surface, ideal: [55, null], acceptable: [40, null], weight: 3}
+    - {key: rooms, label: Pièces, kind: range, field: rooms, ideal: [3, null], acceptable: [2, null], weight: 2}
+    - {key: floor, label: Étage, kind: range, field: floor, ideal: [4, 8], acceptable: [2, 12], weight: 3}
+    - {key: relative_floor, label: Étage relatif (0-1), kind: range, field: computed.relative_floor, ideal: [0.5, 1], acceptable: [0.3, 1], weight: 2}
+    - {key: altitude, label: Altitude fenêtre (m), kind: range, field: computed.window_altitude_m, ideal: [100, null], acceptable: [70, null], weight: 1}
+    - {key: clearance_best, label: Dégagement - meilleur secteur (m), kind: range, field: computed.best_clearance_m, ideal: [150, null], acceptable: [40, null], weight: 2}
+    - {key: clearance_n, label: Dégagement Nord (m), kind: range, field: computed.sectors.N.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: clearance_ne, label: Dégagement Nord-Est (m), kind: range, field: computed.sectors.NE.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: clearance_e, label: Dégagement Est (m), kind: range, field: computed.sectors.E.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: clearance_se, label: Dégagement Sud-Est (m), kind: range, field: computed.sectors.SE.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: clearance_s, label: Dégagement Sud (m), kind: range, field: computed.sectors.S.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: clearance_sw, label: Dégagement Sud-Ouest (m), kind: range, field: computed.sectors.SW.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: clearance_w, label: Dégagement Ouest (m), kind: range, field: computed.sectors.W.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: clearance_nw, label: Dégagement Nord-Ouest (m), kind: range, field: computed.sectors.NW.distance_m, ideal: [100, null], acceptable: [30, null], weight: 0}
+    - {key: sky_view, label: Ciel visible / luminosité (0-100), kind: range, field: computed.sky_index, manual: light, ideal: [70, null], acceptable: [40, null], weight: 2}
+    - {key: vis_a_vis, label: Risque de vis-à-vis (0-100), kind: range, field: computed.vis_a_vis.score, manual: vis_a_vis, ideal: [null, 20], acceptable: [null, 60], weight: 3}
+    - {key: view_quality, label: Qualité de vue (0-100), kind: range, field: computed.view_quality.score, manual: view, ideal: [65, null], acceptable: [45, null], weight: 3}
+    - {key: balcony, label: Balcon / terrasse, kind: bool, field: balcony, weight: 1}
+    - {key: orientation, label: Orientation, kind: set, field: orientation, prefer: [S, SE, SW, E, W], weight: 0}
+    - {key: dpe, label: DPE (1=A … 7=G), kind: range, field: computed.dpe_rank, ideal: [null, 3], acceptable: [null, 5], weight: 1}
+    - {key: year_built, label: Année de construction, kind: range, field: year_built, ideal: [1990, null], acceptable: [1960, null], weight: 0}
+    - {key: elevator, label: Ascenseur, kind: bool, field: elevator, weight: 1}
+    - {key: station_distance, label: Distance à pied gare (m), kind: range, field: computed.station_walk_m, ideal: [null, 800], acceptable: [null, 1800], weight: 2}
+    - {key: noise, label: Bruit estimé (0-100), kind: range, field: computed.noise_score, ideal: [null, 20], acceptable: [null, 55], weight: 1}
+    - {key: georisks, label: Risques Géorisques (nb), kind: range, field: computed.georisks.count, ideal: [null, 1], acceptable: [null, 4], weight: 1}
+    - {key: parks, label: Espaces verts à proximité (nb), kind: range, field: computed.parks_count, ideal: [2, null], acceptable: [1, null], weight: 1}
+    - {key: condition, label: État (1=à rénover … 3=neuf), kind: range, field: computed.condition_rank, ideal: [2, null], acceptable: [1, null], weight: 0}
+    - {key: tags, label: Tags souhaités, kind: set, field: tags, prefer: [], weight: 0}
+
+presets:
+  - name: Vue dégagée en hauteur
+    weights: {floor: 4, relative_floor: 3, altitude: 2, clearance_best: 4, sky_view: 3, vis_a_vis: 5, view_quality: 4, price: 2, market_gap: 1, surface: 2, noise: 1}
+
+connectors:   # enabled, schedule (cron APScheduler), options propres à chaque source
+  dvf:
+    enabled: true
+    schedule: "0 3 * * 1"
+    years: [2023, 2024, 2025]
+    url_template: "https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{dept}.csv.gz"
+  ban: {enabled: true, schedule: "30 3 * * *", url: "https://api-adresse.data.gouv.fr/search/", rate_per_s: 10}
+  dpe:
+    enabled: true
+    schedule: "0 4 * * *"
+    url: "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines"
+    rate_per_s: 4
+  georisques: {enabled: true, schedule: "30 4 * * *", url: "https://georisques.gouv.fr/api/v1/gaspar/risques", radius_m: 1000, rate_per_s: 4}
+  transports: {enabled: true, schedule: "0 2 1 * *", overpass_url: "https://overpass-api.de/api/interpreter"}
+  osm: {enabled: true, schedule: "0 2 2 * *", overpass_url: "https://overpass-api.de/api/interpreter"}
+  sitadel:
+    enabled: false          # URL du jeu Sitadel à vérifier (change à chaque millésime) puis activer
+    schedule: "0 5 1 * *"
+    url: ""
+  ign_bdtopo:
+    enabled: false          # import lourd : à lancer volontairement (make ingest SRC=ign_bdtopo)
+    schedule: null
+    wfs_url: "https://data.geopf.fr/wfs/ows"
+    tile_m: 2000
+    bbox: null              # null = bbox du département ; sinon [lon_min, lat_min, lon_max, lat_max]
+  ign_rgealti:
+    enabled: false
+    schedule: null
+    url: "https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json"
+    step_m: 250
+    bbox: null
+  # --- Biens à vendre : squelettes DÉSACTIVÉS. Vérifier CGU / licences / API officielles avant tout usage.
+  notaires: {enabled: false, schedule: null}
+  encheres: {enabled: false, schedule: null}
+  bailleurs: {enabled: false, schedule: null}
+  brs_psla: {enabled: false, schedule: null}
+  appels_projets: {enabled: false, schedule: null}
+
+alerts:
+  default_min_score: 75
+  file: alerts.log          # relatif à DATA_DIR
+  check_schedule: "*/30 * * * *"
