@@ -5,7 +5,7 @@ from collections.abc import Callable
 from datetime import date
 from typing import Annotated, Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from geoalchemy2.shape import from_shape
 from pydantic import BaseModel, ConfigDict
@@ -95,6 +95,38 @@ def _apply(p: Property, data: PropertyIn) -> None:
         if g:
             p.geom = from_shape(Point(g["lon"], g["lat"]), srid=4326)
             p.postcode, p.insee, p.commune = p.postcode or g["postcode"], g["insee"], p.commune or g["city"]
+
+
+@router.get("/listings")
+def listings(db: Db, q: str | None = None, type: str | None = None, price_min: float | None = None, price_max: float | None = None,
+             surface_min: float | None = None, rooms_min: int | None = None, floor_min: int | None = None,
+             balcony: bool = False, elevator: bool = False, favorites: bool = False, hidden: bool = False,
+             source: Annotated[list[str] | None, Query()] = None, sort: str = "recent", limit: int = 300) -> dict[str, Any]:
+    """Recherche simple : filtres de base, sans score. Les champs inconnus sont exclus quand le filtre est actif."""
+    stmt = select(Property)
+    cond: list[Any] = [Property.status == "favori"] if favorites else ([] if hidden else [Property.status != "ecarte"])
+    if q:
+        like = f"%{q}%"
+        cond.append(Property.title.ilike(like) | Property.commune.ilike(like) | Property.postcode.ilike(like) | Property.address.ilike(like))
+    for col, op, val in ((Property.price, ">=", price_min), (Property.price, "<=", price_max), (Property.surface, ">=", surface_min),
+                         (Property.rooms, ">=", rooms_min), (Property.floor, ">=", floor_min)):
+        if val is not None:
+            cond.append(col >= val if op == ">=" else col <= val)
+    if type:
+        cond.append(Property.type == type)
+    if balcony:
+        cond.append(Property.balcony.is_(True))
+    if elevator:
+        cond.append(Property.elevator.is_(True))
+    if source:
+        cond.append(Property.source.in_(source))
+    order = {"price_asc": Property.price.asc().nulls_last(), "price_desc": Property.price.desc().nulls_last(),
+             "ppm2": (Property.price / func.nullif(Property.surface, 0)).asc().nulls_last(),
+             "surface": Property.surface.desc().nulls_last()}.get(sort, Property.created_at.desc())
+    rows = db.scalars(stmt.where(*cond).order_by(order).limit(limit)).all()
+    total = db.scalar(select(func.count()).select_from(Property).where(*cond)) or 0
+    sources = sorted(db.scalars(select(Property.source).distinct()).all())
+    return {"total": total, "items": [prop_dict(p) for p in rows], "sources": sources}
 
 
 @router.post("/properties/search")

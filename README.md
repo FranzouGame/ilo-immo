@@ -31,15 +31,13 @@ Le worker (`docker compose logs worker`) rejoue les ingestions activées selon l
 
 ## Utilisation
 
-- **Biens** : filtres à gauche (importance 0-5 par critère, plage idéale/acceptable, « indispensable » optionnel), liste triable,
-  carte synchronisée. Le filtre complet est dans l'URL (`#f=…`) donc partageable. Préréglage « Vue dégagée en hauteur ».
-- **Fiche** : score détaillé, dégagement par direction, vis-à-vis expliqué, comparaison aux ventes DVF voisines, DPE, risques,
-  transports, **bouton « Voir en 3D »** (bâtiments extrudés + cône de vue), liens Street View / Mapillary / Google Earth.
-- **Notes de visite** (vue, lumière, vis-à-vis, photos) : elles remplacent l'estimation et pèsent 1,5× plus.
-- **+ Ajouter** : coller une adresse puis « Pré-remplir » (géocodage, DPE, risques, prix du secteur, indicateurs de vue).
-- **Élargir la recherche** : montre aussi les biens « quasi éligibles » (marge de 15 % sur les filtres indispensables).
-- **Alertes** : filtre enregistré avec un seuil « Alerte ≥ » → e-mail (si SMTP configuré) et/ou `data/alerts.log`.
-- Export CSV des résultats filtrés et classés.
+Un site d'annonces classique, pour des offres **absentes des grands portails** (enchères judiciaires, ventes interactives…) :
+- Barre de filtres simple : lieu, type, prix max, surface, pièces, étage, balcon/terrasse, ascenseur, favoris, source.
+- Liste de cartes (photo, prix, €/m², pièces, surface, étage) ou carte ; tri par date, prix, prix au m², surface.
+- Fiche : photos, caractéristiques, lien vers l'annonce d'origine, favori / masquer. Section repliable « Quartier et vue » (estimations).
+- **+ Ajouter une annonce** : lien, adresse (placée sur la carte automatiquement) et caractéristiques.
+- Les filtres sont dans l'URL (`#…`) donc partageables.
+- L'API garde aussi le moteur de score avancé (`/api/properties/search`, vis-à-vis, 3D) non exposé dans l'interface.
 
 ## Commandes
 
@@ -47,7 +45,7 @@ Le worker (`docker compose logs worker`) rejoue les ingestions activées selon l
 
 ## Choix et limites (à lire)
 
-- **Biens à vendre.** Seul `encheres` est actif : enchères judiciaires immobilières du 91 (licitor.com), collecte quotidienne via
+- **Biens à vendre.** Deux sources actives (`encheres`, `interactives` = 36h-immo.com, ~10 biens du 91) : enchères judiciaires immobilières du 91 (licitor.com) et ventes interactives ; collecte quotidienne via
   `app/scraping.py` (robots.txt obligatoire, 1 requête / 3 s, User-Agent explicite, aucun contournement). Le prix affiché est la
   **mise à prix**, pas un prix de vente (écart au marché non calculé). **Vérifiez les CGU du site** avant tout usage durable : c'est votre responsabilité.
 - `notaires` : **non implémenté** - le site immobilier.notaires.fr affiche ses annonces via JavaScript/API interne ; l'exploiter

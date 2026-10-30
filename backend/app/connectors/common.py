@@ -19,6 +19,9 @@ def lonlat(prop: Property) -> tuple[float, float] | None:
     return (p.x, p.y) if isinstance(p, Point) else None
 
 
+USER_OWNED = {"tags", "notes", "custom", "photos", "status"}
+
+
 def upsert_properties(session: Session, source: str, records: list[dict[str, Any]]) -> int:
     """Insère/met à jour des biens issus d'un connecteur d'annonces (clé : source + url)."""
     n = 0
@@ -27,12 +30,13 @@ def upsert_properties(session: Session, source: str, records: list[dict[str, Any
         lon, lat = rec.pop("lon", None), rec.pop("lat", None)
         prop = session.scalar(select(Property).where(Property.source == source, Property.url == rec.get("url")))
         if prop is None:
-            prop = Property(source=source, photos=[], computed={}, **{**{'tags': [], 'custom': {}}, **rec})
+            prop = Property(source=source, computed={}, **{**{'tags': [], 'custom': {}, 'photos': []}, **rec})
             session.add(prop)
             session.flush()
         else:
             for k, v in rec.items():
-                setattr(prop, k, v)
+                if k not in USER_OWNED:  # ne jamais écraser ce que l'utilisateur a saisi
+                    setattr(prop, k, v)
         if lon is not None and lat is not None:
             prop.geom = point_sql(lon, lat)
         session.add(SourceRecord(source=source, external_id=rec.get("url") or str(prop.id), property_id=prop.id, payload=raw))

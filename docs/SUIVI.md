@@ -9,7 +9,13 @@
 - Vérifié en réel : DVF (35 691 ventes, 134 communes), BAN+DPE+Géorisques+altimétrie (pré-remplissage), BD TOPO (2 617 bâtiments sur Évry).
 - Qualité : pytest 10 OK, ruff OK, mypy strict OK, tsc/eslint/vitest OK, `docker compose up` OK.
 
+## Refonte « site d'annonces » (2026-10-30)
+- Front réécrit : filtres de base, cartes, fiche simple, carte 2D, ajout simplifié. Anciens panneaux de poids/marché/sources supprimés du front.
+- Nouveau connecteur `interactives` (36h-immo.com, JSON-LD, robots.txt) ; `GET /api/listings`.
+- Backend scoring/alertes/marché conservé mais non exposé (candidat à suppression si inutile).
+
 ## À faire
+- Plus de sources d'offres : vente-hlm.fr (bailleurs), encheres-publiques.com (signaux IA restrictifs, non fait), notaires (JS).
 - Notaires : pas de scraping possible proprement (JS) ; piste = alertes e-mail (Gmail) ou flux officiel.
 - Enchères : 16 biens réels du 91 importés (licitor) ; autres sites d'enchères non traités.
 - Tester OSM / transports / RGE ALTI / Sitadel sur données réelles (non exécutés complets : volumes Overpass).

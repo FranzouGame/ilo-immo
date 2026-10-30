@@ -78,6 +78,12 @@ connectors:   # enabled, schedule (cron APScheduler), options propres à chaque 
   georisques: {enabled: true, schedule: "30 4 * * *", url: "https://georisques.gouv.fr/api/v1/gaspar/risques", radius_m: 1000, rate_per_s: 4}
   transports: {enabled: true, schedule: "0 2 1 * *", overpass_url: "https://overpass-api.de/api/interpreter"}
   osm: {enabled: true, schedule: "0 2 2 * *", overpass_url: "https://overpass-api.de/api/interpreter"}
+  interactives:               # 36h-immo.com : ventes interactives, robots.txt respecté
+    enabled: true
+    schedule: "30 7 * * *"
+    base_url: "https://www.36h-immo.com"
+    list_path: "/fr/annonces/essonne-91/ventes-interactives-immobilieres-essonne-91.html"
+    delay_s: 3
   sitadel:
     enabled: false          # URL du jeu Sitadel à vérifier (change à chaque millésime) puis activer
     schedule: "0 5 1 * *"
