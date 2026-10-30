@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from geoalchemy2.shape import to_shape
@@ -27,6 +28,7 @@ def upsert_properties(session: Session, source: str, records: list[dict[str, Any
     n = 0
     for rec in records:
         raw = rec.pop("raw", {})
+        now = datetime.now(UTC)
         lon, lat = rec.pop("lon", None), rec.pop("lat", None)
         prop = session.scalar(select(Property).where(Property.source == source, Property.url == rec.get("url")))
         if prop is None:
@@ -37,6 +39,7 @@ def upsert_properties(session: Session, source: str, records: list[dict[str, Any
             for k, v in rec.items():
                 if k not in USER_OWNED:  # ne jamais écraser ce que l'utilisateur a saisi
                     setattr(prop, k, v)
+        prop.last_seen_at, prop.gone = now, False
         if lon is not None and lat is not None:
             prop.geom = point_sql(lon, lat)
         ext = rec.get("url") or str(prop.id)

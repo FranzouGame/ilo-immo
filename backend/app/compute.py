@@ -8,6 +8,7 @@ from shapely.ops import transform
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.auction import auction_info
 from app.config import app_config
 from app.connectors.common import lonlat, point_sql
 from app.market import reference_ppm2
@@ -63,6 +64,7 @@ def compute_property(session: Session, prop: Property) -> dict[str, Any]:
     ll = lonlat(prop)
     keep = {k: v for k, v in (prop.computed or {}).items() if k in ("georisks",)}  # issus d'un connecteur
     out: dict[str, Any] = {**keep, "dpe_rank": dpe_rank(prop.dpe), "condition_rank": CONDITION_RANK.get(prop.condition or "")}
+    out["score_price"] = prop.price
     if ll is None:
         return out
     lon, lat = ll
@@ -105,13 +107,23 @@ def compute_property(session: Session, prop: Property) -> dict[str, Any]:
         out["parks_count"] = sum(1 for p in pois if p.kind in ("park", "forest") and p.distance_m <= vcfg["green_radius_m"])
     if (st := _nearest_station(session, lon, lat)) is not None:
         out["station_walk_m"] = round(st * vcfg["walk_detour_factor"])
-    if prop.price and prop.surface and "enchère" not in (prop.tags or []):  # mise à prix ≠ prix de vente
+    out["score_price"] = prop.price
+    if prop.price and prop.surface:
         ref = reference_ppm2(session, lon, lat, prop.insee, prop.type)
-        if ref:
-            ppm2 = prop.price / prop.surface
-            out["market_ppm2"] = round(ppm2)
+        tags = prop.tags or []
+        if "enchère" in tags:  # mise à prix ≠ prix de vente : on estime le prix final probable (voir app/auction.py)
+            info = auction_info(prop.price, prop.surface, ref["median_ppm2"] if ref else None, (prop.insee or "")[:2], cfg["knowledge"])
+            out["auction"] = info
+            out["score_price"] = info["estimate"]
+        elif ref:
             out["market_ref"] = ref
-            out["market_gap_pct"] = round(100 * (ppm2 - ref["median_ppm2"]) / ref["median_ppm2"], 1)
+            if "viager" not in tags:  # prix viager (valeur occupée) non comparable au marché libre
+                ppm2 = prop.price / prop.surface
+                out["market_ppm2"] = round(ppm2)
+                out["market_gap_pct"] = round(100 * (ppm2 - ref["median_ppm2"]) / ref["median_ppm2"], 1)
+    elif prop.price and "enchère" in (prop.tags or []):
+        out["auction"] = auction_info(prop.price, None, None, (prop.insee or "")[:2], cfg["knowledge"])
+        out["score_price"] = out["auction"]["estimate"]
     return out
 
 

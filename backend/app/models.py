@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Any
 
 from geoalchemy2 import Geometry
-from sqlalchemy import ARRAY, Date, DateTime, Float, ForeignKey, Index, Integer, SmallInteger, String, Text, func
+from sqlalchemy import ARRAY, Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, SmallInteger, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -49,6 +49,8 @@ class Property(Base):
     manual_vis_a_vis: Mapped[int | None] = mapped_column(SmallInteger)  # 0-10 (10 = aucun vis-à-vis)
     photos: Mapped[list[str]] = mapped_column(JSONB, default=list)
     computed: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # dernière fois vue chez la source
+    gone: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")  # retirée de la source
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=_now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=_now(), onupdate=_now())
 

@@ -13,11 +13,25 @@ COLUMNS = ["id", "source", "url", "title", "type", "price", "surface", "land_sur
            "condition", "status", "notes", "tags", "custom", "manual_view", "manual_light", "manual_vis_a_vis", "photos"]
 
 
+def kind_of(p: Property) -> str:
+    tags = p.tags or []
+    if "enchère" in tags:
+        return "enchere"
+    if "viager" in tags:
+        return "viager"
+    if "vente interactive" in tags:
+        return "interactive"
+    if p.source in ("programmes",):
+        return "aide"
+    return "autre"
+
+
 def prop_dict(p: Property) -> dict[str, Any]:
     d: dict[str, Any] = {c: getattr(p, c) for c in COLUMNS}
     d["computed"] = p.computed or {}
     ll = lonlat(p)
     d["lon"], d["lat"] = ll if ll else (None, None)
+    d["kind"] = kind_of(p)
     d["price_m2"] = round(p.price / p.surface) if p.price and p.surface else None
     d["created_at"], d["updated_at"] = p.created_at, p.updated_at
     return d

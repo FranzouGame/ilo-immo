@@ -19,12 +19,15 @@ Python 3.12 / FastAPI / SQLAlchemy 2 / Alembic / PostGIS 16 · React + TS strict
 - Typage strict (mypy strict, TS strict) ; ruff line-length 140. Code/commentaires en français.
 
 ## Décisions
-- UI = `/api/listings` (filtres SQL simples). `/api/properties/search` (score) reste pour usage avancé. Sources actives : encheres, interactives.
+- UI = `/api/listings` (filtres SQL simples). `/api/properties/search` (score) reste pour usage avancé. Sources actives : encheres, interactives, programmes, viager. Score = `app/simple_score.py` (7 groupes) + `scoring.evaluate`.
 - Un connecteur d'annonces ne doit jamais écraser tags/notes/custom/photos/status (`USER_OWNED` dans `connectors/common.py`).
 - Score calculé à la volée en mémoire (poids dans la requête) ; indicateurs lourds stockés dans `property.computed` (JSONB).
 - Données inconnues = score neutre 0,5, jamais exclusion. Notes manuelles > estimations (poids ×1,5).
 - Migration Alembic : autogénérée puis nettoyée (filtre `include_object` pour ignorer tiger/topology de l'image PostGIS).
 - BD TOPO via WFS Géoplateforme par tuiles Lambert-93 (pas de dump GPKG) ; RGE ALTI via service altimétrie (grille).
+
+- Enchères : prix noté = estimation `computed.score_price` (`app/auction.py`, chiffres `knowledge:` du YAML, source data.gouv MdB Scanner). Viager : prix = valeur occupée, pas de market_gap.
+- Annonces disparues : `last_seen_at`/`gone` (ListingConnector.run) ; ne jamais marquer gone si aucune annonce revue.
 
 ## Pièges
 - Autogenerate duplique les index spatiaux (`idx_*_geom`) : supprimer les `create_index` manuels du fichier généré.

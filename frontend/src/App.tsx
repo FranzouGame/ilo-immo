@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, hasToken, setToken } from './api'
 import AddForm from './components/AddForm'
 import FilterBar from './components/FilterBar'
+import Guide from './components/Guide'
 import ListingCard from './components/ListingCard'
 import ListingModal from './components/ListingModal'
 import Login from './components/Login'
 import MapView from './components/MapView'
+import Prefs from './components/Prefs'
 import { emptyFilters, fromQuery, toQuery } from './lib/filters'
-import type { Filters, Property } from './types'
+import type { Filters, Property, ScoreDefaults } from './types'
 
 export interface AppConfig { department_name: string; departments: { code: string; name: string }[]; map: { center: [number, number]; zoom: number } }
 
@@ -21,6 +23,9 @@ export default function App() {
   const [openId, setOpenId] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
   const [view, setView] = useState<'liste' | 'carte'>('liste')
+  const [page, setPage] = useState<'annonces' | 'guide'>('annonces')
+  const [guideFocus, setGuideFocus] = useState<string | null>(null)
+  const [defaults, setDefaults] = useState<ScoreDefaults | null>(null)
   const [error, setError] = useState('')
   const timer = useRef<number>()
 
@@ -38,8 +43,8 @@ export default function App() {
     window.history.replaceState(null, '', qs ? `#${qs}` : window.location.pathname)
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
-      api<{ items: Property[]; total: number; sources: string[] }>(`/listings?${qs}`)
-        .then((r) => { setItems(r.items); setTotal(r.total); setSources(r.sources); setError('') })
+      api<{ items: Property[]; total: number; sources: string[]; defaults: ScoreDefaults }>(`/listings?${qs}`)
+        .then((r) => { setItems(r.items); setTotal(r.total); setSources(r.sources); setDefaults(r.defaults); setError('') })
         .catch((e: Error) => setError(e.message))
     }, 250)
   }, [f])
@@ -53,14 +58,20 @@ export default function App() {
     <div className="site">
       <header>
         <b className="logo">Ilo</b><span className="muted">Annonces hors grands sites · {config.department_name}</span>
+        <nav className="tabs">
+          <button className={page === 'annonces' ? 'on' : ''} onClick={() => setPage('annonces')}>Annonces</button>
+          <button className={page === 'guide' ? 'on' : ''} onClick={() => { setGuideFocus(null); setPage('guide') }}>Comprendre les ventes</button>
+        </nav>
         <button className="primary" onClick={() => setAdding(true)}>+ Ajouter une annonce</button>
         <button className="link" onClick={() => { setToken(''); setAuthed(false) }}>Quitter</button>
       </header>
+      {page === 'guide' ? <Guide focus={guideFocus} /> : (<>
       <FilterBar departments={config.departments} f={f} set={setF} sources={sources} reset={() => setF(emptyFilters())} />
+      <Prefs f={f} set={setF} defaults={defaults} />
       <div className="toolbar">
         <b>{total} annonce{total > 1 ? 's' : ''}</b>
         <select value={f.sort} onChange={(e) => setF({ ...f, sort: e.target.value })} aria-label="Trier">
-          <option value="recent">Plus récentes</option><option value="price_asc">Prix croissant</option><option value="price_desc">Prix décroissant</option>
+          <option value="score">Meilleur score</option><option value="recent">Plus récentes</option><option value="price_asc">Prix croissant</option><option value="price_desc">Prix décroissant</option>
           <option value="ppm2">Prix au m²</option><option value="surface">Plus grandes</option>
         </select>
         <div className="seg">
@@ -75,7 +86,8 @@ export default function App() {
           {items.length === 0 && <p className="empty">Aucune annonce pour ces critères. Élargissez la recherche ou lancez <code>make ingest</code>.</p>}
         </main>
       ) : <main className="mapmain"><MapView config={config} items={items} onOpen={setOpenId} /></main>}
-      {open && <ListingModal p={open} onClose={() => setOpenId(null)} onChanged={load} />}
+      </>)}
+      {open && <ListingModal p={open} onClose={() => setOpenId(null)} onChanged={load} openGuide={(id) => { setOpenId(null); setGuideFocus(id); setPage('guide') }} />}
       {adding && <AddForm onClose={() => setAdding(false)} onCreated={() => { setAdding(false); load() }} />}
     </div>
   )

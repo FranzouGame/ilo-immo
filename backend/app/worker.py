@@ -7,6 +7,7 @@ from apscheduler.triggers.cron import CronTrigger
 from app.alerts import check_alerts
 from app.compute import recompute_all
 from app.config import app_config
+from app.connectors.base import ListingConnector
 from app.connectors.registry import build, is_enabled, load_all
 from app.db import SessionLocal
 
@@ -17,7 +18,7 @@ DERIVED = {"dvf", "dpe", "georisques", "ban", "osm", "transports", "ign_bdtopo",
 def ingest(name: str) -> None:
     with SessionLocal() as s:
         build(name, s).run()
-    if name in DERIVED or load_all()[name].__mro__[1].__name__ == "ListingConnector":
+    if name in DERIVED or issubclass(load_all()[name], ListingConnector):
         with SessionLocal() as s:
             log.info("recalcul de %d biens", recompute_all(s))
 

@@ -51,7 +51,7 @@ def parse_ad(html: str, url: str) -> dict[str, Any] | None:
         "address": ", ".join(x.get_text(" ", strip=True) for x in (street, city) if x) or None, "commune": commune,
         "tags": ["enchère"], "notes": "Prix = mise à prix (pas un prix de vente).",
         "custom": {"vente_le": when["datetime"] if when and when.has_attr("datetime") else None,
-                   "tribunal": court.get_text(" ", strip=True) if court else None},
+                   "tribunal": " ".join(court.get_text(" ").split()) if court else None},
         "lon": float(ll.group(2)) if ll else None, "lat": float(ll.group(1)) if ll else None,
         "raw": {"html_len": len(html)},
     }
@@ -79,6 +79,7 @@ class EncheresConnector(ListingConnector):
                     break
                 urls += new
                 page += 1
+        self.touch([u for u in urls if u in known])  # déjà connues : toujours en ligne, pas relues
         batch = []
         for u in urls:
             if u in known:

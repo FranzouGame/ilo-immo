@@ -5,9 +5,10 @@ from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
-from app.models import IngestionRun
+from app.models import IngestionRun, Property
 
 log = logging.getLogger("ilo.ingest")
 REGISTRY: dict[str, type["Connector"]] = {}
@@ -93,3 +94,23 @@ class ListingConnector(Connector, ABC):
     def upsert(self, records: list[dict[str, Any]]) -> int:
         from app.connectors.common import upsert_properties
         return upsert_properties(self.session, self.name, records)
+
+    def touch(self, urls: list[str]) -> None:
+        """Marque des annonces connues comme « encore en ligne » sans les relire."""
+        if urls:
+            self.session.execute(update(Property).where(Property.source == self.name, Property.url.in_(urls))
+                                 .values(last_seen_at=datetime.now(UTC)))
+            self.session.commit()
+
+    def run(self) -> IngestionRun:
+        """Après un import réussi, les annonces non revues sont marquées `gone` (retirées de la source)."""
+        start = datetime.now(UTC)
+        run = super().run()
+        if run.status == "ok":
+            seen = self.session.scalar(select(func.count()).select_from(Property)
+                                       .where(Property.source == self.name, Property.last_seen_at >= start)) or 0
+            if seen:  # garde-fou : une source muette ne doit pas tout faire disparaître
+                self.session.execute(update(Property).where(Property.source == self.name)
+                                     .values(gone=Property.last_seen_at.is_(None) | (Property.last_seen_at < start)))
+                self.session.commit()
+        return run

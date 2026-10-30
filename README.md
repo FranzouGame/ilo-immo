@@ -31,13 +31,17 @@ Le worker (`docker compose logs worker`) rejoue les ingestions activées selon l
 
 ## Utilisation
 
-Un site d'annonces classique, pour des offres **absentes des grands portails** (enchères judiciaires, ventes interactives…) :
-- Barre de filtres simple : lieu, type, prix max, surface, pièces, étage, balcon/terrasse, ascenseur, favoris, source.
-- Liste de cartes (photo, prix, €/m², pièces, surface, étage) ou carte ; tri par date, prix, prix au m², surface.
-- Fiche : photos, caractéristiques, lien vers l'annonce d'origine, favori / masquer. Section repliable « Quartier et vue » (estimations).
-- **+ Ajouter une annonce** : lien, adresse (placée sur la carte automatiquement) et caractéristiques.
-- Les filtres sont dans l'URL (`#…`) donc partageables.
-- L'API garde aussi le moteur de score avancé (`/api/properties/search`, vis-à-vis, 3D) non exposé dans l'interface.
+Un site d'annonces pour des offres **peu visibles sur les grands portails**, avec un score personnalisé et des explications :
+
+- **Annonces** : filtres de base (lieu, département, type, prix max, surface, pièces, étage, balcon/terrasse, ascenseur, favoris, source), liste ou carte.
+- **Score (0-100)** : « ⭐ Mes préférences » règle l'importance (0 à 5) de 7 critères (prix, surface, étage, vue/lumière, gare, balcon, bonne affaire) et vos valeurs cibles
+  (budget idéal, surface, étage). Les annonces sont classées par défaut du meilleur au moins bon score ; une donnée manquante est neutre (jamais éliminatoire).
+  Pour une enchère, c'est le **prix final estimé** qui est noté, pas la mise à prix.
+- **Fiche** : photos, caractéristiques, « Pourquoi ce score ? », encadré pédagogique propre à la catégorie (enchère : consignation, avocat, surenchère,
+  prix final probable ; viager : bouquet, rente, décote ; vente interactive ; BRS/PSLA/TVA 5,5 %/vente HLM), lien vers l'annonce d'origine.
+- **Comprendre les ventes** : guide complet par type de vente, avec les chiffres réels des enchères (Essonne 51 %, Yvelines 55 % du prix voisin, étude MdB Scanner / data.gouv.fr).
+- **+ Ajouter une annonce** : lien, adresse (placée sur la carte automatiquement), caractéristiques.
+- Les filtres et préférences sont dans l'URL (`#…`), donc partageables.
 
 ## Commandes
 
@@ -45,12 +49,13 @@ Un site d'annonces classique, pour des offres **absentes des grands portails** (
 
 ## Choix et limites (à lire)
 
-- **Biens à vendre.** Deux sources actives (`encheres`, `interactives` = 36h-immo.com, ~10 biens du 91) : enchères judiciaires immobilières du 91 (licitor.com) et ventes interactives ; collecte quotidienne via
-  `app/scraping.py` (robots.txt obligatoire, 1 requête / 3 s, User-Agent explicite, aucun contournement). Le prix affiché est la
-  **mise à prix**, pas un prix de vente (écart au marché non calculé). **Vérifiez les CGU du site** avant tout usage durable : c'est votre responsabilité.
-- `notaires` : **non implémenté** - le site immobilier.notaires.fr affiche ses annonces via JavaScript/API interne ; l'exploiter
-  demanderait un navigateur headless ou une API non documentée (hors cadre). Voir une API/flux officiel ou les alertes e-mail.
-- `bailleurs`, `brs_psla`, `appels_projets` : squelettes désactivés (pas de source ouverte exploitable identifiée).
+- **Sources d'annonces actives** (collecte quotidienne via `app/scraping.py` : robots.txt obligatoire, 1 requête / 3 s, User-Agent explicite, aucun contournement) :
+  `encheres` (Licitor, enchères judiciaires), `interactives` (36h-immo.com), `programmes` (proprietairemaintenant.fr : TVA 5,5 %, BRS, PSLA, prix maîtrisé, vente HLM),
+  `viager` (Renée Costes). **Vérifiez les CGU de chaque site** avant usage durable : c'est votre responsabilité. Les photos sont affichées par lien direct vers la source.
+- Une annonce qui disparaît de sa source est masquée (`gone`) ; une enchère dont la date est passée aussi.
+- Prix : mise à prix (enchère), prix de départ (interactive), « à partir de » (programmes), valeur occupée (viager) - jamais présentés comme un prix de vente classique.
+- **Non collectés** : annonces des notaires (immobilier.notaires.fr : affichage par JavaScript / API interne), encheres-publiques.com (accès bloqué aux robots), Agorastore et
+  Avoventes (JavaScript), Interenchères (recherche interdite par robots.txt), portails commerciaux. Piste pour les notaires : alertes e-mail du site.
 - Sitadel ne fournit pas de coordonnées : seuls les projets ≥ 10 logements avec adresse sont géocodés (BAN).
 - DVF : seules les mutations « Vente » à un seul local sont retenues (pas de ventes multi-lots ambiguës).
 - Transports : OpenStreetMap par défaut ; le référentiel IDFM peut s'y substituer (voir `docs/connecteurs.md`).

@@ -22,7 +22,9 @@ from app.connectors.georisques import lookup_risks
 from app.connectors.registry import is_enabled, load_all
 from app.db import SessionLocal, get_session
 from app.models import IngestionRun, MarketStat, Property, SavedFilter
+from app.scoring import evaluate
 from app.search import prop_dict, search
+from app.simple_score import build_spec
 
 Db = Annotated[Session, Depends(get_session)]
 public = APIRouter(prefix="/api")
@@ -99,22 +101,29 @@ def _apply(p: Property, data: PropertyIn) -> None:
 
 
 @router.get("/listings")
-def listings(db: Db, q: str | None = None, type: str | None = None, price_min: float | None = None, price_max: float | None = None,
-             surface_min: float | None = None, dept: str | None = None, rooms_min: int | None = None, floor_min: int | None = None,
+def listings(db: Db, q: str | None = None, dept: str | None = None, type: str | None = None, price_max: float | None = None,
+             surface_min: float | None = None, rooms_min: int | None = None, floor_min: int | None = None,
              balcony: bool = False, elevator: bool = False, favorites: bool = False, hidden: bool = False,
-             source: Annotated[list[str] | None, Query()] = None, sort: str = "recent", limit: int = 300) -> dict[str, Any]:
-    """Recherche simple : filtres de base, sans score. Les champs inconnus sont exclus quand le filtre est actif."""
-    stmt = select(Property)
+             source: Annotated[list[str] | None, Query()] = None, sort: str = "score",
+             budget: float | None = None, surface_target: float | None = None, floor_target: float | None = None,
+             w_price: int | None = None, w_surface: int | None = None, w_floor: int | None = None, w_view: int | None = None,
+             w_station: int | None = None, w_outdoor: int | None = None, w_deal: int | None = None,
+             limit: int = 400) -> dict[str, Any]:
+    """Recherche : filtres SQL de base + score « Mes préférences » (0-100) calculé pour chaque annonce.
+    Les champs inconnus sont exclus quand un filtre les concerne, mais ne pénalisent pas le score (valeur neutre)."""
+    today = date.today().isoformat()
     cond: list[Any] = [Property.status == "favori"] if favorites else ([] if hidden else [Property.status != "ecarte"])
+    cond += [Property.gone.is_(False), (Property.custom["vente_le"].astext.is_(None)) | (Property.custom["vente_le"].astext >= today)]
     if q:
         like = f"%{q}%"
         cond.append(Property.title.ilike(like) | Property.commune.ilike(like) | Property.postcode.ilike(like) | Property.address.ilike(like))
-    for col, op, val in ((Property.price, ">=", price_min), (Property.price, "<=", price_max), (Property.surface, ">=", surface_min),
-                         (Property.rooms, ">=", rooms_min), (Property.floor, ">=", floor_min)):
-        if val is not None:
-            cond.append(col >= val if op == ">=" else col <= val)
     if dept:
         cond.append(Property.postcode.like(f"{dept}%") | Property.insee.like(f"{dept}%"))
+    for col, val in ((Property.surface, surface_min), (Property.rooms, rooms_min), (Property.floor, floor_min)):
+        if val is not None:
+            cond.append(col >= val)
+    if price_max is not None:
+        cond.append(Property.price <= price_max)
     if type:
         cond.append(Property.type == type)
     if balcony:
@@ -123,13 +132,24 @@ def listings(db: Db, q: str | None = None, type: str | None = None, price_min: f
         cond.append(Property.elevator.is_(True))
     if source:
         cond.append(Property.source.in_(source))
-    order = {"price_asc": Property.price.asc().nulls_last(), "price_desc": Property.price.desc().nulls_last(),
-             "ppm2": (Property.price / func.nullif(Property.surface, 0)).asc().nulls_last(),
-             "surface": Property.surface.desc().nulls_last()}.get(sort, Property.created_at.desc())
-    rows = db.scalars(stmt.where(*cond).order_by(order).limit(limit)).all()
+    cfg = app_config()
+    spec = build_spec(cfg, {"price": w_price, "surface": w_surface, "floor": w_floor, "view": w_view, "station": w_station,
+                            "outdoor": w_outdoor, "deal": w_deal}, budget, surface_target, floor_target)
+    rows = db.scalars(select(Property).where(*cond).limit(2000)).all()
+    items = []
+    for p in rows:
+        d = prop_dict(p)
+        ev = evaluate(d, spec, cfg)
+        items.append({**d, "score": ev["score"], "breakdown": ev["breakdown"]})
+    keyf: dict[str, Any] = {"price_asc": lambda r: (r["price"] is None, r["price"] or 0),
+                            "price_desc": lambda r: (r["price"] is None, -(r["price"] or 0)),
+                            "ppm2": lambda r: (r["price_m2"] is None, r["price_m2"] or 0),
+                            "surface": lambda r: (r["surface"] is None, -(r["surface"] or 0)),
+                            "recent": lambda r: -r["created_at"].timestamp()}
+    items.sort(key=keyf.get(sort, lambda r: -r["score"]))
     total = db.scalar(select(func.count()).select_from(Property).where(*cond)) or 0
-    sources = sorted(db.scalars(select(Property.source).distinct()).all())
-    return {"total": total, "items": [prop_dict(p) for p in rows], "sources": sources}
+    sources = sorted(db.scalars(select(Property.source).where(Property.gone.is_(False)).distinct()).all())
+    return {"total": total, "items": items[:limit], "sources": sources, "defaults": cfg["scoring"]["simple"]}
 
 
 @router.post("/properties/search")

@@ -14,7 +14,15 @@
 - Nouveau connecteur `interactives` (36h-immo.com, JSON-LD, robots.txt) ; `GET /api/listings`.
 - Backend scoring/alertes/marché conservé mais non exposé (candidat à suppression si inutile).
 
+## Sources + score + pédagogie (2026-10-30)
+- Nouveaux connecteurs : `programmes` (34 offres 91/78), `viager` (24+39 « à la vente »), `interactives`/`encheres` étendus au 78. Total ≈ 143 annonces.
+- Score « Mes préférences » (7 curseurs + 3 cibles) trié par défaut ; fiche « Pourquoi ce score ? » ; encadrés pédagogiques ; page « Comprendre les ventes » avec chiffres MdB Scanner.
+- Disparition d'annonces gérée (`gone`), enchères passées masquées.
+- Testé en réel : programmes, viager, API listings. Non testé visuellement (pas de navigateur dans l'environnement).
+
 ## À faire
+- Vérifier le rendu à l'écran (cartes, préférences, guide) ; ajuster les textes pédagogiques avec un professionnel (notaire/avocat) avant tout usage public.
+- Sources écartées (voir README) ; avoventes.fr et résultats passés de Licitor (prix réels d'adjudication) seraient des ajouts possibles.
 - Plus de sources d'offres : vente-hlm.fr (bailleurs), encheres-publiques.com (signaux IA restrictifs, non fait), notaires (JS).
 - Notaires : pas de scraping possible proprement (JS) ; piste = alertes e-mail (Gmail) ou flux officiel.
 - Enchères : 16 biens réels du 91 importés (licitor) ; autres sites d'enchères non traités.

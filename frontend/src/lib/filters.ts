@@ -2,16 +2,18 @@ import type { Filters } from '../types'
 
 export const emptyFilters = (): Filters => ({
   q: '', dept: '', type: '', price_max: '', surface_min: '', rooms_min: '', floor_min: '',
-  balcony: false, elevator: false, favorites: false, source: [], sort: 'recent',
+  balcony: false, elevator: false, favorites: false, source: [], sort: 'score',
+  budget: '', surface_target: '', floor_target: '',
+  w_price: '', w_surface: '', w_floor: '', w_view: '', w_station: '', w_outdoor: '', w_deal: '',
 })
 
-/** Filtres -> query string de l'API (et de l'URL partageable). Les valeurs vides sont omises. */
+/** Filtres -> query string de l'API (et de l'URL partageable). Les valeurs vides ou par défaut sont omises. */
 export function toQuery(f: Filters): string {
   const p = new URLSearchParams()
   for (const [k, v] of Object.entries(f)) {
     if (Array.isArray(v)) v.forEach((x) => p.append(k, x))
     else if (v === true) p.set(k, 'true')
-    else if (typeof v === 'string' && v !== '' && !(k === 'sort' && v === 'recent')) p.set(k, v)
+    else if (typeof v === 'string' && v !== '' && !(k === 'sort' && v === 'score')) p.set(k, v)
   }
   return p.toString()
 }
@@ -30,6 +32,7 @@ export function fromQuery(qs: string): Filters {
 export const eur = (v: number | null | undefined): string => (v == null ? 'Prix NC' : `${Math.round(v).toLocaleString('fr-FR')} €`)
 export const photoUrl = (f: string): string => (f.startsWith('http') ? f : `/api/photos/${f}`)
 export const SOURCES: Record<string, string> = {
-  encheres: 'Enchère judiciaire', interactives: 'Vente interactive', manuel: 'Ajouté par moi', demo: 'Démo',
+  encheres: 'Enchères judiciaires', interactives: 'Ventes interactives', viager: 'Viager', programmes: 'Neuf et accession aidée',
+  manuel: 'Ajoutées par moi', demo: 'Démo',
 }
 export const sourceLabel = (s: string): string => SOURCES[s] ?? s

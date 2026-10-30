@@ -7,7 +7,7 @@ from typing import Any
 from bs4 import BeautifulSoup
 
 from app.connectors.ban import geocode
-from app.connectors.base import Connector
+from app.connectors.base import ListingConnector
 from app.connectors.common import upsert_properties
 from app.scraping import RobotsClient
 
@@ -48,7 +48,7 @@ def parse_listing(html: str, url: str) -> dict[str, Any] | None:
     }
 
 
-class InteractivesConnector(Connector):
+class InteractivesConnector(ListingConnector):
     name = "interactives"
     label = "Ventes interactives (36h-immo.com)"
     license = "Pages publiques (CGU du site à respecter)"
