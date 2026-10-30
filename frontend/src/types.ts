@@ -39,6 +39,7 @@ export interface Property {
 }
 export interface Filters {
   q: string
+  dept: string
   type: string
   price_max: string
   surface_min: string

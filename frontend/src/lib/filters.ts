@@ -1,7 +1,7 @@
 import type { Filters } from '../types'
 
 export const emptyFilters = (): Filters => ({
-  q: '', type: '', price_max: '', surface_min: '', rooms_min: '', floor_min: '',
+  q: '', dept: '', type: '', price_max: '', surface_min: '', rooms_min: '', floor_min: '',
   balcony: false, elevator: false, favorites: false, source: [], sort: 'recent',
 })
 

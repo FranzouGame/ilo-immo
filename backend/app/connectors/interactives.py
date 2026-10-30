@@ -58,9 +58,11 @@ class InteractivesConnector(Connector):
 
     def fetch(self) -> Iterator[list[tuple[str, str]]]:
         http = RobotsClient(self.cfg["base_url"], self.cfg.get("delay_s", 3.0))
-        page = http.get_html(self.cfg["base_url"] + self.cfg["list_path"])
-        urls = sorted({self.cfg["base_url"] + u for u in re.findall(r'/fr/annonce/\w+/[^"\']+\.html', page)})
-        batch = [(u, http.get_html(u)) for u in urls]
+        urls: set[str] = set()
+        for d in self.app_cfg["departments"]:
+            page = http.get_html(self.cfg["base_url"] + self.cfg["list_path"].format(slug=d["slug"], code=d["code"]))
+            urls |= {self.cfg["base_url"] + u for u in re.findall(r'/fr/annonce/\w+/[^"\']+\.html', page)}
+        batch = [(u, http.get_html(u)) for u in sorted(urls)]
         if batch:
             yield batch
 
@@ -68,7 +70,7 @@ class InteractivesConnector(Connector):
         out = []
         ban = self.app_cfg["connectors"]["ban"]["url"]
         for u, h in raw:
-            if (r := parse_listing(h, u)) and (r["postcode"] or "").startswith(self.app_cfg["department"]):
+            if (r := parse_listing(h, u)) and (r["postcode"] or "")[:2] in {d["code"] for d in self.app_cfg["departments"]}:
                 if g := geocode(ban, r["address"], r["postcode"]):
                     r["lon"], r["lat"], r["insee"] = g["lon"], g["lat"], g["insee"]
                 out.append(r)

@@ -1,9 +1,10 @@
 # Configuration centrale. Rien d'autre n'est codé en dur : département, seuils, pondérations, sources.
 # Surcharge possible : variable d'environnement DEPARTMENT, ou CONFIG_PATH vers un autre fichier.
-department: "91"
-department_name: Essonne
-bbox: [1.90, 48.27, 2.58, 48.78]   # lon_min, lat_min, lon_max, lat_max (cadre du département)
-map: {center: [2.25, 48.52], zoom: 10}
+# Départements couverts. Pour en ajouter un : code INSEE, nom, slug des sites sources, cadre (lon_min, lat_min, lon_max, lat_max).
+departments:
+  - {code: "91", name: Essonne, slug: essonne, bbox: [1.90, 48.27, 2.58, 48.78]}
+  - {code: "78", name: Yvelines, slug: yvelines, bbox: [1.44, 48.43, 2.19, 49.10]}
+map: {center: [2.20, 48.70], zoom: 9}
 
 view:                        # voir docs/calculs.md
   floor_height_m: 2.7        # altitude fenêtre = sol + étage × 2,7
@@ -82,7 +83,7 @@ connectors:   # enabled, schedule (cron APScheduler), options propres à chaque 
     enabled: true
     schedule: "30 7 * * *"
     base_url: "https://www.36h-immo.com"
-    list_path: "/fr/annonces/essonne-91/ventes-interactives-immobilieres-essonne-91.html"
+    list_path: "/fr/annonces/{slug}-{code}/ventes-interactives-immobilieres-{slug}-{code}.html"
     delay_s: 3
   sitadel:
     enabled: false          # URL du jeu Sitadel à vérifier (change à chaque millésime) puis activer
@@ -93,7 +94,7 @@ connectors:   # enabled, schedule (cron APScheduler), options propres à chaque 
     schedule: null
     wfs_url: "https://data.geopf.fr/wfs/ows"
     tile_m: 2000
-    bbox: null              # null = bbox du département ; sinon [lon_min, lat_min, lon_max, lat_max]
+    bbox: null              # null = cadre des départements ; sinon [lon_min, lat_min, lon_max, lat_max]
   ign_rgealti:
     enabled: false
     schedule: null
@@ -105,7 +106,6 @@ connectors:   # enabled, schedule (cron APScheduler), options propres à chaque 
   encheres:                  # Licitor (enchères judiciaires) : robots.txt respecté, 1 requête / 3 s
     enabled: true
     schedule: "0 7 * * *"
-    dept_slug: essonne
     delay_s: 3
     max_pages: 30
   bailleurs: {enabled: false, schedule: null}

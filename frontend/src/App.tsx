@@ -9,7 +9,7 @@ import MapView from './components/MapView'
 import { emptyFilters, fromQuery, toQuery } from './lib/filters'
 import type { Filters, Property } from './types'
 
-export interface AppConfig { department_name: string; map: { center: [number, number]; zoom: number } }
+export interface AppConfig { department_name: string; departments: { code: string; name: string }[]; map: { center: [number, number]; zoom: number } }
 
 export default function App() {
   const [authed, setAuthed] = useState(hasToken())
@@ -56,7 +56,7 @@ export default function App() {
         <button className="primary" onClick={() => setAdding(true)}>+ Ajouter une annonce</button>
         <button className="link" onClick={() => { setToken(''); setAuthed(false) }}>Quitter</button>
       </header>
-      <FilterBar f={f} set={setF} sources={sources} reset={() => setF(emptyFilters())} />
+      <FilterBar departments={config.departments} f={f} set={setF} sources={sources} reset={() => setF(emptyFilters())} />
       <div className="toolbar">
         <b>{total} annonce{total > 1 ? 's' : ''}</b>
         <select value={f.sort} onChange={(e) => setF({ ...f, sort: e.target.value })} aria-label="Trier">

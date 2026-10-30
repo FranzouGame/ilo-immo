@@ -33,6 +33,10 @@ def settings() -> Settings:
 @lru_cache
 def app_config() -> dict[str, Any]:
     cfg: dict[str, Any] = yaml.safe_load(settings().config_path.read_text(encoding="utf-8"))
-    if dept := os.environ.get("DEPARTMENT"):
-        cfg["department"] = dept
+    if only := os.environ.get("DEPARTMENTS"):  # ex. DEPARTMENTS=91 pour restreindre
+        cfg["departments"] = [d for d in cfg["departments"] if d["code"] in only.split(",")]
     return cfg
+
+
+def departments() -> list[dict[str, Any]]:
+    return list(app_config()["departments"])

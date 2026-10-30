@@ -20,11 +20,14 @@ class IgnBdtopoConnector(Connector):
     warning = "Import lourd (~plusieurs centaines de milliers de bâtiments pour le 91). Utiliser `bbox` pour limiter."
 
     def fetch(self) -> Iterator[list[dict[str, Any]]]:
-        w, s, e, n = self.cfg.get("bbox") or self.app_cfg["bbox"]
         tr = Transformer.from_crs(4326, 2154, always_xy=True)
+        http = PoliteClient(rate_per_s=2, timeout=300)
+        for w, s, e, n in self.bboxes():
+            yield from self._tiles(http, tr, w, s, e, n)
+
+    def _tiles(self, http: PoliteClient, tr: Transformer, w: float, s: float, e: float, n: float) -> Iterator[list[dict[str, Any]]]:
         (x0, y0), (x1, y1) = tr.transform(w, s), tr.transform(e, n)
         step = float(self.cfg["tile_m"])
-        http = PoliteClient(rate_per_s=2, timeout=300)
         x = x0
         while x < x1:
             y = y0

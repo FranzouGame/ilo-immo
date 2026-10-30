@@ -39,7 +39,13 @@ def upsert_properties(session: Session, source: str, records: list[dict[str, Any
                     setattr(prop, k, v)
         if lon is not None and lat is not None:
             prop.geom = point_sql(lon, lat)
-        session.add(SourceRecord(source=source, external_id=rec.get("url") or str(prop.id), property_id=prop.id, payload=raw))
+        ext = rec.get("url") or str(prop.id)
+        sr = session.scalar(select(SourceRecord).where(SourceRecord.source == source, SourceRecord.external_id == ext,
+                                                       SourceRecord.property_id == prop.id))
+        if sr is None:
+            session.add(SourceRecord(source=source, external_id=ext, property_id=prop.id, payload=raw))
+        else:
+            sr.payload = raw
         n += 1
     return n
 

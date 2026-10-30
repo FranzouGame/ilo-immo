@@ -46,7 +46,8 @@ def health() -> dict[str, str]:
 @router.get("/config")
 def get_config() -> dict[str, Any]:
     c = app_config()
-    return {"department": c["department"], "department_name": c["department_name"], "map": c["map"],
+    return {"departments": [{"code": d["code"], "name": d["name"]} for d in c["departments"]],
+            "department_name": " · ".join(d["name"] for d in c["departments"]), "map": c["map"],
             "criteria": c["scoring"]["criteria"], "presets": c["presets"], "view": c["view"]}
 
 
@@ -99,7 +100,7 @@ def _apply(p: Property, data: PropertyIn) -> None:
 
 @router.get("/listings")
 def listings(db: Db, q: str | None = None, type: str | None = None, price_min: float | None = None, price_max: float | None = None,
-             surface_min: float | None = None, rooms_min: int | None = None, floor_min: int | None = None,
+             surface_min: float | None = None, dept: str | None = None, rooms_min: int | None = None, floor_min: int | None = None,
              balcony: bool = False, elevator: bool = False, favorites: bool = False, hidden: bool = False,
              source: Annotated[list[str] | None, Query()] = None, sort: str = "recent", limit: int = 300) -> dict[str, Any]:
     """Recherche simple : filtres de base, sans score. Les champs inconnus sont exclus quand le filtre est actif."""
@@ -112,6 +113,8 @@ def listings(db: Db, q: str | None = None, type: str | None = None, price_min: f
                          (Property.rooms, ">=", rooms_min), (Property.floor, ">=", floor_min)):
         if val is not None:
             cond.append(col >= val if op == ">=" else col <= val)
+    if dept:
+        cond.append(Property.postcode.like(f"{dept}%") | Property.insee.like(f"{dept}%"))
     if type:
         cond.append(Property.type == type)
     if balcony:

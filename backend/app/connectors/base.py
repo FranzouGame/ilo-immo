@@ -32,6 +32,10 @@ class Connector(ABC):
         self.app_cfg = app_cfg
         self.session = session
 
+    def bboxes(self) -> list[list[float]]:
+        """Cadres à importer : option `bbox` du connecteur, sinon ceux des départements configurés."""
+        return [self.cfg["bbox"]] if self.cfg.get("bbox") else [d["bbox"] for d in self.app_cfg["departments"]]
+
     @abstractmethod
     def fetch(self) -> Iterator[Any]:
         """Produit des lots bruts (le réseau et les fichiers sont lus ici)."""

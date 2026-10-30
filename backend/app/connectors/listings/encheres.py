@@ -69,15 +69,16 @@ class EncheresConnector(ListingConnector):
         http = RobotsClient(self.base, self.cfg.get("delay_s", 3.0))
         known = set(self.session.scalars(select(Property.url).where(Property.source == self.name)))
         urls: list[str] = []
-        page = 1
-        while page <= self.cfg.get("max_pages", 30):
-            html = http.get_html(self.base + self.list_path.format(dept_slug=self.cfg["dept_slug"]) + f"?p={page}")
-            found = re.findall(r'href="(/annonce/[^"]+\.html)"', html)
-            new = [self.base + u for u in dict.fromkeys(found) if self.base + u not in urls]
-            if not new:
-                break
-            urls += new
-            page += 1
+        for dept in self.app_cfg["departments"]:
+            page = 1
+            while page <= self.cfg.get("max_pages", 30):
+                html = http.get_html(self.base + self.list_path.format(dept_slug=dept["slug"]) + f"?p={page}")
+                found = re.findall(r'href="(/annonce/[^"]+\.html)"', html)
+                new = [self.base + u for u in dict.fromkeys(found) if self.base + u not in urls]
+                if not new:
+                    break
+                urls += new
+                page += 1
         batch = []
         for u in urls:
             if u in known:

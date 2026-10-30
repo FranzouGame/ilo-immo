@@ -28,8 +28,8 @@ class DvfConnector(Connector):
 
     def fetch(self) -> Iterator[list[dict[str, str]]]:
         http = PoliteClient(rate_per_s=1, timeout=300)
-        for year in self.cfg["years"]:
-            url = self.cfg["url_template"].format(year=year, dept=self.app_cfg["department"])
+        for year, dept in ((y, d["code"]) for y in self.cfg["years"] for d in self.app_cfg["departments"]):
+            url = self.cfg["url_template"].format(year=year, dept=dept)
             data = gzip.decompress(http.request("GET", url).content).decode("utf-8")
             by_mutation: dict[str, list[dict[str, str]]] = defaultdict(list)
             for row in csv.DictReader(io.StringIO(data)):

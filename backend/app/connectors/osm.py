@@ -18,8 +18,8 @@ class OsmConnector(Connector):
     kinds = overpass.OSM_KINDS
 
     def fetch(self) -> Iterator[tuple[str, list[dict[str, Any]]]]:
-        for kind, selectors in self.kinds.items():
-            els = overpass.query(self.cfg["overpass_url"], self.app_cfg["department"], selectors)
+        for kind, selectors, dept in ((k, s, d["code"]) for k, s in self.kinds.items() for d in self.app_cfg["departments"]):
+            els = overpass.query(self.cfg["overpass_url"], dept, selectors)
             for i in range(0, len(els), self.batch_size):
                 yield kind, els[i:i + self.batch_size]
 

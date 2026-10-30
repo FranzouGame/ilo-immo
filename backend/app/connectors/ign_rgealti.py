@@ -33,7 +33,10 @@ class IgnRgealtiConnector(Connector):
     def fetch(self) -> Iterator[list[tuple[float, float, float]]]:
         self.session.execute(delete(TerrainPoint))  # ré-échantillonnage complet
         self.session.commit()
-        w, s, e, n = self.cfg.get("bbox") or self.app_cfg["bbox"]
+        for w, s, e, n in self.bboxes():
+            yield from self._grid(w, s, e, n)
+
+    def _grid(self, w: float, s: float, e: float, n: float) -> Iterator[list[tuple[float, float, float]]]:
         step = float(self.cfg["step_m"])
         dlat = step / 110_540
         batch: list[tuple[float, float]] = []

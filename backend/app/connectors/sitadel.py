@@ -27,7 +27,7 @@ class SitadelConnector(Connector):
         if not self.cfg.get("url"):
             raise RuntimeError("connectors.sitadel.url vide : renseigner l'URL du CSV Sitadel (logements autorisés)")
         text = PoliteClient(rate_per_s=1, timeout=600).request("GET", self.cfg["url"]).content.decode("utf-8-sig")
-        rows = [r for r in csv.DictReader(io.StringIO(text), delimiter=";") if r.get("DEP") == self.app_cfg["department"]]
+        rows = [r for r in csv.DictReader(io.StringIO(text), delimiter=";") if r.get("DEP") in {d["code"] for d in self.app_cfg["departments"]}]
         for i in range(0, len(rows), 200):
             yield rows[i:i + 200]
 

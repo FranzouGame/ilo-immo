@@ -1,17 +1,23 @@
 import type { Filters } from '../types'
 import { sourceLabel } from '../lib/filters'
 
-interface Props { f: Filters; set: (f: Filters) => void; sources: string[]; reset: () => void }
+interface Props { departments: { code: string; name: string }[]; f: Filters; set: (f: Filters) => void; sources: string[]; reset: () => void }
 
 const Num = ({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) => (
   <label className="fld">{label}<input type="number" min={0} inputMode="numeric" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} /></label>
 )
 
-export default function FilterBar({ f, set, sources, reset }: Props) {
+export default function FilterBar({ departments, f, set, sources, reset }: Props) {
   const up = <K extends keyof Filters>(k: K, v: Filters[K]) => set({ ...f, [k]: v })
   return (
     <section className="filterbar">
       <label className="fld wide">Où ?<input placeholder="Commune ou code postal" value={f.q} onChange={(e) => up('q', e.target.value)} /></label>
+      {departments.length > 1 && (
+        <label className="fld">Département
+          <select value={f.dept} onChange={(e) => up('dept', e.target.value)}>
+            <option value="">Tous</option>{departments.map((d) => <option key={d.code} value={d.code}>{d.name} ({d.code})</option>)}
+          </select></label>
+      )}
       <label className="fld">Type
         <select value={f.type} onChange={(e) => up('type', e.target.value)}>
           <option value="">Tous</option><option value="appartement">Appartement</option><option value="maison">Maison</option>
