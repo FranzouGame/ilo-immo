@@ -47,8 +47,12 @@ Le worker (`docker compose logs worker`) rejoue les ingestions activées selon l
 
 ## Choix et limites (à lire)
 
-- **Pas de scraping de portails.** Les connecteurs « biens à vendre » (`notaires`, `encheres`, `bailleurs`, `brs_psla`,
-  `appels_projets`) sont des **squelettes désactivés** : vérifier les CGU, privilégier API officielle / partenariat.
+- **Biens à vendre.** Seul `encheres` est actif : enchères judiciaires immobilières du 91 (licitor.com), collecte quotidienne via
+  `app/scraping.py` (robots.txt obligatoire, 1 requête / 3 s, User-Agent explicite, aucun contournement). Le prix affiché est la
+  **mise à prix**, pas un prix de vente (écart au marché non calculé). **Vérifiez les CGU du site** avant tout usage durable : c'est votre responsabilité.
+- `notaires` : **non implémenté** - le site immobilier.notaires.fr affiche ses annonces via JavaScript/API interne ; l'exploiter
+  demanderait un navigateur headless ou une API non documentée (hors cadre). Voir une API/flux officiel ou les alertes e-mail.
+- `bailleurs`, `brs_psla`, `appels_projets` : squelettes désactivés (pas de source ouverte exploitable identifiée).
 - Sitadel ne fournit pas de coordonnées : seuls les projets ≥ 10 logements avec adresse sont géocodés (BAN).
 - DVF : seules les mutations « Vente » à un seul local sont retenues (pas de ventes multi-lots ambiguës).
 - Transports : OpenStreetMap par défaut ; le référentiel IDFM peut s'y substituer (voir `docs/connecteurs.md`).

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.config import app_config
 from app.connectors.common import lonlat, point_sql
 from app.market import reference_ppm2
-from app.models import Building, Poi, Property, TerrainPoint
+from app.models import Building, Poi, Property, Sale, TerrainPoint
 from app.view import NearPoi, Obstacle, analyze_view, dpe_rank, local_projector, noise_score, view_quality, vis_a_vis
 
 CONDITION_RANK = {"a_renover": 1, "bon": 2, "neuf": 3}
@@ -66,6 +66,8 @@ def compute_property(session: Session, prop: Property) -> dict[str, Any]:
     if ll is None:
         return out
     lon, lat = ll
+    if not prop.insee:  # biens importés sans code commune : on reprend celui de la vente DVF la plus proche
+        prop.insee = session.scalar(select(Sale.insee).order_by(Sale.geom.distance_centroid(point_sql(lon, lat))).limit(1))
     proj = local_projector(lon, lat)
     pt = point_sql(lon, lat)
     # bâtiments voisins
@@ -103,7 +105,7 @@ def compute_property(session: Session, prop: Property) -> dict[str, Any]:
         out["parks_count"] = sum(1 for p in pois if p.kind in ("park", "forest") and p.distance_m <= vcfg["green_radius_m"])
     if (st := _nearest_station(session, lon, lat)) is not None:
         out["station_walk_m"] = round(st * vcfg["walk_detour_factor"])
-    if prop.price and prop.surface:
+    if prop.price and prop.surface and "enchère" not in (prop.tags or []):  # mise à prix ≠ prix de vente
         ref = reference_ppm2(session, lon, lat, prop.insee, prop.type)
         if ref:
             ppm2 = prop.price / prop.surface

@@ -27,7 +27,7 @@ def upsert_properties(session: Session, source: str, records: list[dict[str, Any
         lon, lat = rec.pop("lon", None), rec.pop("lat", None)
         prop = session.scalar(select(Property).where(Property.source == source, Property.url == rec.get("url")))
         if prop is None:
-            prop = Property(source=source, **rec)
+            prop = Property(source=source, photos=[], computed={}, **{**{'tags': [], 'custom': {}}, **rec})
             session.add(prop)
             session.flush()
         else:

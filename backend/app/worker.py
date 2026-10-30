@@ -17,7 +17,7 @@ DERIVED = {"dvf", "dpe", "georisques", "ban", "osm", "transports", "ign_bdtopo",
 def ingest(name: str) -> None:
     with SessionLocal() as s:
         build(name, s).run()
-    if name in DERIVED:
+    if name in DERIVED or load_all()[name].__mro__[1].__name__ == "ListingConnector":
         with SessionLocal() as s:
             log.info("recalcul de %d biens", recompute_all(s))
 

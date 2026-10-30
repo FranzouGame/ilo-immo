@@ -96,7 +96,12 @@ connectors:   # enabled, schedule (cron APScheduler), options propres à chaque 
     bbox: null
   # --- Biens à vendre : squelettes DÉSACTIVÉS. Vérifier CGU / licences / API officielles avant tout usage.
   notaires: {enabled: false, schedule: null}
-  encheres: {enabled: false, schedule: null}
+  encheres:                  # Licitor (enchères judiciaires) : robots.txt respecté, 1 requête / 3 s
+    enabled: true
+    schedule: "0 7 * * *"
+    dept_slug: essonne
+    delay_s: 3
+    max_pages: 30
   bailleurs: {enabled: false, schedule: null}
   brs_psla: {enabled: false, schedule: null}
   appels_projets: {enabled: false, schedule: null}

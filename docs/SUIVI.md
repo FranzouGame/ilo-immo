@@ -10,6 +10,8 @@
 - Qualité : pytest 10 OK, ruff OK, mypy strict OK, tsc/eslint/vitest OK, `docker compose up` OK.
 
 ## À faire
+- Notaires : pas de scraping possible proprement (JS) ; piste = alertes e-mail (Gmail) ou flux officiel.
+- Enchères : 16 biens réels du 91 importés (licitor) ; autres sites d'enchères non traités.
 - Tester OSM / transports / RGE ALTI / Sitadel sur données réelles (non exécutés complets : volumes Overpass).
 - Tests d'intégration API (base de test PostGIS) ; test front du composant FilterPanel.
 - Mapillary/Street View : liens seulement (pas d'intégration d'images).
