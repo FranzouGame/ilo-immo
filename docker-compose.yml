@@ -3,7 +3,7 @@ x-backend: &backend
   build: ./backend
   env_file: [.env]
   environment:
-    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ilo}:${POSTGRES_PASSWORD:-change-me-db}@db:5432/${POSTGRES_DB:-ilo}
+    POSTGRES_HOST: db
     CONFIG_PATH: /app/config/app.yaml
     DATA_DIR: /data
   volumes:

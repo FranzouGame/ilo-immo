@@ -6,13 +6,12 @@ import { kindLabel, priceLines } from '../lib/kinds'
 import InfoBox from './InfoBox'
 import type { Property } from '../types'
 
-interface Props { p: Property; onClose: () => void; onChanged: () => void; openGuide: (id: string) => void }
+interface Props { p: Property; onClose: () => void; onChanged: () => void; openGuide: (id: string) => void; setStatus: (s: string) => void; canDelete: boolean }
 
 const Fact = ({ k, v }: { k: string; v: React.ReactNode }) => (v == null || v === '' ? null : <div className="fact"><span>{k}</span><b>{v}</b></div>)
 
-export default function ListingModal({ p, onClose, onChanged, openGuide }: Props) {
+export default function ListingModal({ p, onClose, onChanged, openGuide, setStatus, canDelete }: Props) {
   const [img, setImg] = useState(0)
-  const patch = (body: Record<string, unknown>) => void api(`/properties/${p.id}`, body, 'PATCH').then(onChanged)
   const c = p.computed
   const price = priceLines(p)
   return (
@@ -53,9 +52,9 @@ export default function ListingModal({ p, onClose, onChanged, openGuide }: Props
       )}
       <div className="row">
         {p.url && <a className="btn primary" href={p.url} target="_blank" rel="noreferrer">Voir l'annonce d'origine ↗</a>}
-        <button onClick={() => patch({ status: p.status === 'favori' ? 'a_voir' : 'favori' })}>{p.status === 'favori' ? '★ Retirer des favoris' : '☆ Favori'}</button>
-        <button onClick={() => { patch({ status: 'ecarte' }); onClose() }}>Masquer</button>
-        <button className="danger" onClick={() => { if (confirm('Supprimer cette annonce ?')) void api(`/properties/${p.id}`, undefined, 'DELETE').then(() => { onChanged(); onClose() }) }}>Supprimer</button>
+        <button onClick={() => setStatus(p.status === 'favori' ? 'a_voir' : 'favori')}>{p.status === 'favori' ? '★ Retirer des favoris' : '☆ Favori'}</button>
+        <button onClick={() => { setStatus('ecarte'); onClose() }}>Masquer</button>
+        {canDelete && <button className="danger" onClick={() => { if (confirm('Supprimer cette annonce ?')) void api(`/properties/${p.id}`, undefined, 'DELETE').then(() => { onChanged(); onClose() }) }}>Supprimer</button>}
       </div>
     </div></div>
   )

@@ -43,6 +43,26 @@ Un site d'annonces pour des offres **peu visibles sur les grands portails**, ave
 - **+ Ajouter une annonce** : lien, adresse (placée sur la carte automatiquement), caractéristiques.
 - Les filtres et préférences sont dans l'URL (`#…`), donc partageables.
 
+## Publier sur GitHub Pages (site public)
+
+GitHub Pages ne sert que des pages statiques. Le workflow `.github/workflows/pages.yml` fait donc tout le travail dans GitHub Actions, chaque jour et à chaque `push` :
+base PostGIS jetable -> collecte des annonces (mêmes connecteurs) -> export `listings.json` -> build du front en mode statique -> déploiement.
+Filtres, score « Mes préférences » et tri sont calculés dans le navigateur ; favoris et masquages restent dans le navigateur du visiteur (localStorage).
+
+1. Pousser le dépôt sur GitHub (branche `main`).
+2. *Settings -> Pages -> Source : GitHub Actions* (ou `gh api -X POST repos/<user>/<repo>/pages -f build_type=workflow`).
+3. Lancer le workflow (*Actions -> Site (GitHub Pages) -> Run workflow*). Adresse : `https://<user>.github.io/<repo>/`.
+
+Dans le site public : pas de mot de passe, pas de saisie d'annonce, **pas de photos** (`static_export.include_photos: false` dans `config/app.yaml`),
+pas de notes ni d'âge/sexe des vendeurs de viager, balise `noindex`. Garde-fou : un export trop petit (source bloquée depuis GitHub) annule le déploiement.
+Un dépôt public sans activité pendant 60 jours voit ses tâches planifiées suspendues par GitHub : relancer le workflow à la main.
+
+## Mot de passe PostgreSQL
+
+Le mot de passe de la base (`POSTGRES_PASSWORD`) n'est lu par PostgreSQL qu'à la **première** création du volume. Si vous le changez ensuite :
+`docker compose exec -T db sh -c 'printf "%s\n" "ALTER USER :\"u\" PASSWORD :'"'"'pw'"'"';" | psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v pw="$POSTGRES_PASSWORD" -v u="$POSTGRES_USER"'`,
+ou `docker compose down -v` (efface les données ; les annonces se recollent avec `make ingest`). Les caractères spéciaux (`@`, `:`, `/`) sont acceptés.
+
 ## Commandes
 
 `make up|down|logs|migrate|ingest|seed|test|lint` (voir `Makefile`).

@@ -29,11 +29,13 @@ Python 3.12 / FastAPI / SQLAlchemy 2 / Alembic / PostGIS 16 · React + TS strict
 - Enchères : prix noté = estimation `computed.score_price` (`app/auction.py`, chiffres `knowledge:` du YAML, source data.gouv MdB Scanner). Viager : prix = valeur occupée, pas de market_gap.
 - Annonces disparues : `last_seen_at`/`gone` (ListingConnector.run) ; ne jamais marquer gone si aucune annonce revue.
 
+- Site public : `.github/workflows/pages.yml` ; `frontend/src/lib/staticApi.ts` reproduit `simple_score.py`+`scoring.py` (parité vérifiée : mêmes scores). Toute modif du score = les deux.
+- Mot de passe DB : URL construite par `config.db_url` (URL.create), pas de DATABASE_URL à encoder.
+
 ## Pièges
 - Autogenerate duplique les index spatiaux (`idx_*_geom`) : supprimer les `create_index` manuels du fichier généré.
 - Sans BD TOPO importée : pas de vis-à-vis/ciel (volontairement non calculés, score neutre).
 - Si `/api/listings` renvoie 404 depuis l'hôte alors que le code est bon : vieux conteneur/daemon (Docker Desktop vs WSL) sur le port 8000 ; `docker compose up -d --build`.
-- Hook sandbox : `curl` bloqué dans cette session ; tester l'API avec python/urllib.
 - Dataset ADEME `dpe03existant` et URL Sitadel changent : voir `config/app.yaml`.
 - Overpass / WFS IGN : lents et limités ; `PoliteClient` gère débit + retry.
 

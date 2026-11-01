@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 
 from alembic import context
-from app.config import settings
+from app.config import db_url, settings
 from app.models import Base
 
 target_metadata = Base.metadata
@@ -16,7 +16,7 @@ def include_object(obj, name, type_, reflected, compare_to):  # type: ignore[no-
 
 
 def run() -> None:
-    engine = create_engine(settings().database_url)
+    engine = create_engine(db_url(settings()))
     with engine.connect() as conn:
         context.configure(connection=conn, target_metadata=target_metadata, include_object=include_object)
         with context.begin_transaction():

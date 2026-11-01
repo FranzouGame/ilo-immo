@@ -9,12 +9,13 @@ import Login from './components/Login'
 import MapView from './components/MapView'
 import Prefs from './components/Prefs'
 import { emptyFilters, fromQuery, toQuery } from './lib/filters'
+import { STATIC, listings, loadData, setStatusLocal } from './lib/staticApi'
 import type { Filters, Property, ScoreDefaults } from './types'
 
 export interface AppConfig { department_name: string; departments: { code: string; name: string }[]; map: { center: [number, number]; zoom: number } }
 
 export default function App() {
-  const [authed, setAuthed] = useState(hasToken())
+  const [authed, setAuthed] = useState(STATIC || hasToken())
   const [config, setConfig] = useState<AppConfig | null>(null)
   const [f, setF] = useState<Filters>(() => fromQuery(window.location.hash))
   const [items, setItems] = useState<Property[]>([])
@@ -27,6 +28,7 @@ export default function App() {
   const [guideFocus, setGuideFocus] = useState<string | null>(null)
   const [defaults, setDefaults] = useState<ScoreDefaults | null>(null)
   const [error, setError] = useState('')
+  const [updated, setUpdated] = useState('')
   const timer = useRef<number>()
 
   useEffect(() => {
@@ -35,7 +37,9 @@ export default function App() {
     return () => window.removeEventListener('ilo-logout', out)
   }, [])
   useEffect(() => {
-    if (authed) void api<AppConfig>('/config').then(setConfig).catch((e: Error) => setError(e.message))
+    if (!authed) return
+    const cfg = STATIC ? loadData().then((d) => { setUpdated(d.generated_at); return d.config as AppConfig }) : api<AppConfig>('/config')
+    void cfg.then(setConfig).catch((e: Error) => setError(e.message))
   }, [authed])
 
   const load = useCallback(() => {
@@ -43,8 +47,8 @@ export default function App() {
     window.history.replaceState(null, '', qs ? `#${qs}` : window.location.pathname)
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
-      api<{ items: Property[]; total: number; sources: string[]; defaults: ScoreDefaults }>(`/listings?${qs}`)
-        .then((r) => { setItems(r.items); setTotal(r.total); setSources(r.sources); setDefaults(r.defaults); setError('') })
+      const res = STATIC ? loadData().then((d) => listings(d, f)) : api<{ items: Property[]; total: number; sources: string[]; defaults: ScoreDefaults }>(`/listings?${qs}`)
+      res.then((r) => { setItems(r.items); setTotal(r.total); setSources(r.sources); setDefaults(r.defaults); setError('') })
         .catch((e: Error) => setError(e.message))
     }, 250)
   }, [f])
@@ -53,7 +57,10 @@ export default function App() {
   if (!authed) return <Login onDone={() => setAuthed(true)} />
   if (!config) return <p className="center">{error || 'Chargement…'}</p>
   const open = items.find((p) => p.id === openId) ?? null
-  const fav = (p: Property) => void api(`/properties/${p.id}`, { status: p.status === 'favori' ? 'a_voir' : 'favori' }, 'PATCH').then(load)
+  const setStatus = (p: Property, status: string) => {
+    if (STATIC) { setStatusLocal(p.id, status); load() } else void api(`/properties/${p.id}`, { status }, 'PATCH').then(load)
+  }
+  const fav = (p: Property) => setStatus(p, p.status === 'favori' ? 'a_voir' : 'favori')
   return (
     <div className="site">
       <header>
@@ -62,8 +69,8 @@ export default function App() {
           <button className={page === 'annonces' ? 'on' : ''} onClick={() => setPage('annonces')}>Annonces</button>
           <button className={page === 'guide' ? 'on' : ''} onClick={() => { setGuideFocus(null); setPage('guide') }}>Comprendre les ventes</button>
         </nav>
-        <button className="primary" onClick={() => setAdding(true)}>+ Ajouter une annonce</button>
-        <button className="link" onClick={() => { setToken(''); setAuthed(false) }}>Quitter</button>
+        {!STATIC && <button className="primary" onClick={() => setAdding(true)}>+ Ajouter une annonce</button>}
+        {!STATIC && <button className="link" onClick={() => { setToken(''); setAuthed(false) }}>Quitter</button>}
       </header>
       {page === 'guide' ? <Guide focus={guideFocus} /> : (<>
       <FilterBar departments={config.departments} f={f} set={setF} sources={sources} reset={() => setF(emptyFilters())} />
@@ -87,8 +94,15 @@ export default function App() {
         </main>
       ) : <main className="mapmain"><MapView config={config} items={items} onOpen={setOpenId} /></main>}
       </>)}
-      {open && <ListingModal p={open} onClose={() => setOpenId(null)} onChanged={load} openGuide={(id) => { setOpenId(null); setGuideFocus(id); setPage('guide') }} />}
+      {open && <ListingModal p={open} canDelete={!STATIC} setStatus={(s) => setStatus(open, s)} onClose={() => setOpenId(null)} onChanged={load} openGuide={(id) => { setOpenId(null); setGuideFocus(id); setPage('guide') }} />}
       {adding && <AddForm onClose={() => setAdding(false)} onCreated={() => { setAdding(false); load() }} />}
+      {STATIC && (
+        <footer className="foot">
+          Mis à jour le {updated.slice(0, 10)} · Annonces issues de licitor.com, 36h-immo.com, proprietairemaintenant.fr et costes-viager.com (liens vers les annonces d'origine) ·
+          Prix du marché : DVF (Etalab) · Cartes : OpenFreeMap, © OpenStreetMap · Estimations indicatives, sans valeur de conseil.
+          Favoris et masquages sont enregistrés dans votre navigateur.
+        </footer>
+      )}
     </div>
   )
 }

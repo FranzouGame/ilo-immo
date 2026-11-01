@@ -144,6 +144,9 @@ knowledge:
   auction_deposit: {pct: 10, min_eur: 3000}   # consignation pour enchérir
   auction_surenchere_pct: 10                  # surenchère possible sous 10 jours
 
+static_export:               # site public GitHub Pages (voir .github/workflows/pages.yml)
+  include_photos: false        # true = liens directs vers les photos des sites sources (à vos risques : droits d'auteur)
+
 alerts:
   default_min_score: 75
   file: alerts.log          # relatif à DATA_DIR
