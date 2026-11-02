@@ -22,6 +22,23 @@ def refresh_market_stats(session: Session) -> None:
     session.commit()
 
 
+def comparable_ppm2(session: Session, lon: float, lat: float, insee: str | None, type_: str, surface: float,
+                    min_n: int = 8) -> dict[str, Any] | None:
+    """Prix/m² médian des ventes comparables : même type, surface à ±35 %, d'abord dans ~1,5 km, sinon dans la commune.
+    Évite de juger une grande maison (moins chère au m²) contre la médiane de toutes les tailles."""
+    q = ("SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY price_m2) AS med, count(*) AS n FROM sale "
+         "WHERE type = :t AND surface BETWEEN :lo AND :hi AND ")
+    p = {"t": type_, "lo": surface * 0.65, "hi": surface * 1.35}
+    for scope, cond, extra in (("near", "ST_DWithin(geom, ST_SetSRID(ST_MakePoint(:lon,:lat),4326), 0.015)", {"lon": lon, "lat": lat}),
+                               ("commune", "insee = :insee", {"insee": insee})):
+        if scope == "commune" and not insee:
+            continue
+        row = session.execute(text(q + cond), {**p, **extra}).one()
+        if row.n >= min_n and row.med:
+            return {"scope": "similar" if scope == "near" else "similar_commune", "median_ppm2": float(row.med), "n": int(row.n)}
+    return None
+
+
 def reference_ppm2(session: Session, lon: float | None, lat: float | None, insee: str | None,
                    type_: str, min_n: int = 10) -> dict[str, Any] | None:
     """Prix/m² médian de référence : carré de 1 km si assez de ventes, sinon commune."""

@@ -13,7 +13,7 @@ const crit: Crit[] = [
 const defaults = { weights: { price: 3, surface: 3, floor: 2, view: 2, station: 1, outdoor: 1, deal: 2 }, budget: 250000, surface: 50, floor: 2 }
 const mk = (id: number, o: Partial<Property>): Property => ({ id, title: `bien ${id}`, source: 'encheres', type: 'appartement', price: 200000, surface: 60, rooms: 3, floor: 5,
   balcony: null, elevator: null, status: 'a_voir', tags: [], photos: [], custom: {}, computed: { score_price: 200000 }, created_at: '2026-01-01', kind: 'autre', commune: 'Évry', postcode: '91000', address: null, ...o }) as Property
-const data: StaticData = { generated_at: '', config: { departments: [], department_name: '', map: { center: [2, 48], zoom: 9 }, criteria: crit }, defaults,
+const data: StaticData = { generated_at: '', config: { departments: [], department_name: '', map: { center: [2, 48], zoom: 9 }, criteria: crit, finance: { rate_pct: 3.8, years: 20, down_payment: 0 }, fees_pct: {} }, defaults,
   items: [mk(1, {}), mk(2, { price: 500000, computed: { score_price: 500000 }, surface: 30 }), mk(3, { balcony: true, floor: 1 })] }
 
 describe('score statique', () => {
@@ -42,5 +42,15 @@ describe('score statique', () => {
   it('masque une enchère dont la date est passée', () => {
     const old = { ...data, items: [mk(5, { custom: { vente_le: '2020-01-01T10:00:00' } })] }
     expect(listings(old, emptyFilters()).total).toBe(0)
+  })
+})
+
+describe('filtre gare et tri par affaire', () => {
+  const withWalk = { ...data, items: [mk(1, { computed: { score_price: 1, station_walk_m: 400, deal_pct: 10 } }), mk(2, { computed: { score_price: 1, station_walk_m: 1600, deal_pct: 40 } }), mk(3, { computed: { score_price: 1 } })] }
+  it('gare ≤ 10 min (800 m) exclut les plus loin et les inconnus', () => {
+    expect(listings(withWalk, { ...emptyFilters(), station_max: '10' }).items.map((p) => p.id)).toEqual([1])
+  })
+  it('meilleures affaires : décote décroissante, inconnus en dernier', () => {
+    expect(listings(withWalk, { ...emptyFilters(), sort: 'deal' }).items.map((p) => p.id)).toEqual([2, 1, 3])
   })
 })

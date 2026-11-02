@@ -111,6 +111,12 @@ connectors:   # enabled, schedule (cron APScheduler), options propres à chaque 
     schedule: "0 7 * * *"
     delay_s: 3
     max_pages: 30
+  immonot:                    # Immonot : annonces des études notariales, robots.txt respecté
+    enabled: true
+    schedule: "45 7 * * *"
+    base_url: "https://www.immonot.com"
+    delay_s: 3
+    max_pages: 40
   programmes:                 # proprietairemaintenant.fr : TVA 5,5 %, BRS, PSLA, prix maîtrisé, vente HLM
     enabled: true
     schedule: "0 8 * * *"
@@ -141,11 +147,24 @@ knowledge:
     - {max: 150000, multiple: 1.7}
     - {max: 300000, multiple: 1.3}
     - {max: null, multiple: 1.1}
+  auction_paid_pct_by_reserve:        # prix payé / prix voisin (médiane, q1, q3) par tranche de mise à prix, national
+    - {max: 30000, median: 53, q1: 36, q3: 69}
+    - {max: 80000, median: 59, q1: 42, q3: 74}
+    - {max: 150000, median: 65, q1: 49, q3: 82}
+    - {max: 300000, median: 63, q1: 47, q3: 85}
+    - {max: null, median: 77, q1: 58, q3: 101}
+  auction_occupied_factor: 0.89       # appartement occupé 63 % du prix voisin vs 71 % libre (mêmes conditions)
   auction_deposit: {pct: 10, min_eur: 3000}   # consignation pour enchérir
+  fees_pct: {ancien: 7.5, neuf: 2.5, enchere: 10}   # frais d'acquisition indicatifs (notaire / droits / avocat), % du prix
   auction_surenchere_pct: 10                  # surenchère possible sous 10 jours
 
 static_export:               # site public GitHub Pages (voir .github/workflows/pages.yml)
   include_photos: false        # true = liens directs vers les photos des sites sources (à vos risques : droits d'auteur)
+
+finance:                     # simulateur de mensualité (valeurs par défaut, modifiables dans le site)
+  rate_pct: 3.8
+  years: 20
+  down_payment: 20000
 
 alerts:
   default_min_score: 75

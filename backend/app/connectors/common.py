@@ -20,7 +20,7 @@ def lonlat(prop: Property) -> tuple[float, float] | None:
     return (p.x, p.y) if isinstance(p, Point) else None
 
 
-USER_OWNED = {"tags", "notes", "custom", "photos", "status"}
+USER_OWNED = {"tags", "notes", "photos", "status"}  # `custom` est fusionné (clés de la source écrasées, clés de l'utilisateur gardées)
 
 
 def upsert_properties(session: Session, source: str, records: list[dict[str, Any]]) -> int:
@@ -36,8 +36,13 @@ def upsert_properties(session: Session, source: str, records: list[dict[str, Any
             session.add(prop)
             session.flush()
         else:
+            new_price = rec.get("price")
+            if prop.price and new_price and abs(prop.price - new_price) > 0.5:  # changement de prix : on garde l'ancien
+                prop.price_history = [*(prop.price_history or []), {"date": now.date().isoformat(), "price": prop.price}]
             for k, v in rec.items():
-                if k not in USER_OWNED:  # ne jamais écraser ce que l'utilisateur a saisi
+                if k == "custom":
+                    prop.custom = {**(prop.custom or {}), **v}
+                elif k not in USER_OWNED:  # ne jamais écraser ce que l'utilisateur a saisi
                     setattr(prop, k, v)
         prop.last_seen_at, prop.gone = now, False
         if lon is not None and lat is not None:

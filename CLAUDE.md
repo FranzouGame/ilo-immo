@@ -19,8 +19,8 @@ Python 3.12 / FastAPI / SQLAlchemy 2 / Alembic / PostGIS 16 · React + TS strict
 - Typage strict (mypy strict, TS strict) ; ruff line-length 140. Code/commentaires en français.
 
 ## Décisions
-- UI = `/api/listings` (filtres SQL simples). `/api/properties/search` (score) reste pour usage avancé. Sources actives : encheres, interactives, programmes, viager. Score = `app/simple_score.py` (7 groupes) + `scoring.evaluate`.
-- Un connecteur d'annonces ne doit jamais écraser tags/notes/custom/photos/status (`USER_OWNED` dans `connectors/common.py`).
+- UI = `/api/listings` (filtres SQL simples). `/api/properties/search` (score) reste pour usage avancé. Sources actives : encheres, interactives, immonot, programmes, viager. Score = `app/simple_score.py` (7 groupes) + `scoring.evaluate`.
+- Un connecteur d'annonces ne doit jamais écraser tags/notes/photos/status (`USER_OWNED` dans `connectors/common.py`) ; `custom` est fusionné (clés de la source mises à jour).
 - Score calculé à la volée en mémoire (poids dans la requête) ; indicateurs lourds stockés dans `property.computed` (JSONB).
 - Données inconnues = score neutre 0,5, jamais exclusion. Notes manuelles > estimations (poids ×1,5).
 - Migration Alembic : autogénérée puis nettoyée (filtre `include_object` pour ignorer tiger/topology de l'image PostGIS).
@@ -29,6 +29,7 @@ Python 3.12 / FastAPI / SQLAlchemy 2 / Alembic / PostGIS 16 · React + TS strict
 - Enchères : prix noté = estimation `computed.score_price` (`app/auction.py`, chiffres `knowledge:` du YAML, source data.gouv MdB Scanner). Viager : prix = valeur occupée, pas de market_gap.
 - Annonces disparues : `last_seen_at`/`gone` (ListingConnector.run) ; ne jamais marquer gone si aucune annonce revue.
 
+- Perles : `computed.deal_pct` (décote apparente : marché / enchère estimée / décote viager ; BRS exclu), `price_history` (changements de prix, fusionné depuis le `listings.json` précédent en CI), `custom.occupation`/`visite` (enchères). `isGem` (TS) = score ≥ 70 ∧ deal ≥ 30 ∧ non occupé ∧ non aide. Ces champs sont lus tels quels (pas de recalcul TS).
 - Site public : `.github/workflows/pages.yml` ; `frontend/src/lib/staticApi.ts` reproduit `simple_score.py`+`scoring.py` (parité vérifiée : mêmes scores). Toute modif du score = les deux.
 - Mot de passe DB : URL construite par `config.db_url` (URL.create), pas de DATABASE_URL à encoder.
 

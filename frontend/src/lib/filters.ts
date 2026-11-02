@@ -1,7 +1,7 @@
 import type { Filters } from '../types'
 
 export const emptyFilters = (): Filters => ({
-  q: '', dept: '', type: '', price_max: '', surface_min: '', rooms_min: '', floor_min: '',
+  q: '', dept: '', type: '', price_max: '', surface_min: '', rooms_min: '', floor_min: '', station_max: '', fresh: false, gems: false,
   balcony: false, elevator: false, favorites: false, source: [], sort: 'score',
   budget: '', surface_target: '', floor_target: '',
   w_price: '', w_surface: '', w_floor: '', w_view: '', w_station: '', w_outdoor: '', w_deal: '',
@@ -32,7 +32,7 @@ export function fromQuery(qs: string): Filters {
 export const eur = (v: number | null | undefined): string => (v == null ? 'Prix NC' : `${Math.round(v).toLocaleString('fr-FR')} €`)
 export const photoUrl = (f: string): string => (f.startsWith('http') ? f : `/api/photos/${f}`)
 export const SOURCES: Record<string, string> = {
-  encheres: 'Enchères judiciaires', interactives: 'Ventes interactives', viager: 'Viager', programmes: 'Neuf et accession aidée',
+  encheres: 'Enchères judiciaires', interactives: 'Ventes interactives', immonot: 'Notaires', viager: 'Viager', programmes: 'Neuf et accession aidée',
   manuel: 'Ajoutées par moi', demo: 'Démo',
 }
 export const sourceLabel = (s: string): string => SOURCES[s] ?? s

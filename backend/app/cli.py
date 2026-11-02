@@ -1,6 +1,7 @@
 """CLI : python -m app.cli ingest [source] | recompute | seed-demo | export-static OUT.json [PREVIOUS.json]"""
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -35,6 +36,11 @@ def main(argv: list[str]) -> int:
             prev = json.loads(Path(argv[2]).read_text("utf-8")) if len(argv) > 2 and Path(argv[2]).exists() else None
             data = export(s, prev, include_photos=bool(app_config().get("static_export", {}).get("include_photos")))
             Path(argv[1]).write_text(json.dumps(data, ensure_ascii=False), "utf-8")
+            if site_url := os.environ.get("SITE_URL"):
+                from datetime import UTC, datetime
+
+                from app.export_static import feed_xml
+                Path(argv[1]).with_name("feed.xml").write_text(feed_xml(data["items"], site_url, datetime.now(UTC)), "utf-8")
             print(f"{len(data['items'])} annonces exportées")
         elif cmd == "seed-demo":
             from app.demo import seed

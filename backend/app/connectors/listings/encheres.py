@@ -14,6 +14,15 @@ NUMS = {"une": 1, "un": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "six":
 ORDINALS = {"premier": 1, "deuxième": 2, "troisième": 3, "quatrième": 4, "cinquième": 5, "sixième": 6, "septième": 7, "huitième": 8}
 
 
+def occupation(body: str) -> str:
+    """« libre » / « occupé » / « inconnue » d'après la description (un bien occupé est plus difficile à récupérer et part moins cher)."""
+    if "inoccup" in body or "libre de toute occupation" in body or "libre d'occupation" in body:
+        return "libre"
+    if re.search(r"\boccup|\blou[ée]e?s?\b|\blocataires?\b|\bbail\b", body):
+        return "occupé"
+    return "inconnue"
+
+
 def parse_ad(html: str, url: str) -> dict[str, Any] | None:
     """Annonce Licitor -> dict `Property`. None si ce n'est pas un logement (parts de SCI, parking, terrain…)."""
     s = BeautifulSoup(html, "html.parser")
@@ -41,6 +50,8 @@ def parse_ad(html: str, url: str) -> dict[str, Any] | None:
     court = s.select_one(".Court")
     when = s.select_one(".Date time")
     ll = re.search(r"q=(-?\d+\.\d+),(-?\d+\.\d+)", str(s.select_one(".Map a") or ""))
+    visits = s.select_one(".Visits")
+    visit = re.search(r"le ([^<]*? de \d+h\d* à \d+h\d*)", visits.get_text(" ", strip=True)) if visits else None
     commune = city.get_text(" ", strip=True) if city else None
     return {
         "url": url, "title": f"Enchère - {kind.capitalize()} à {commune}", "type": typ,
@@ -50,7 +61,7 @@ def parse_ad(html: str, url: str) -> dict[str, Any] | None:
         "balcony": True if ("balcon" in body or "terrasse" in body) else None,
         "address": ", ".join(x.get_text(" ", strip=True) for x in (street, city) if x) or None, "commune": commune,
         "tags": ["enchère"], "notes": "Prix = mise à prix (pas un prix de vente).",
-        "custom": {"vente_le": when["datetime"] if when and when.has_attr("datetime") else None,
+        "custom": {"occupation": occupation(text.lower()), "visite": visit.group(1) if visit else None, "vente_le": when["datetime"] if when and when.has_attr("datetime") else None,
                    "tribunal": " ".join(court.get_text(" ").split()) if court else None},
         "lon": float(ll.group(2)) if ll else None, "lat": float(ll.group(1)) if ll else None,
         "raw": {"html_len": len(html)},
@@ -67,7 +78,7 @@ class EncheresConnector(ListingConnector):
 
     def fetch(self) -> Iterator[list[tuple[str, str]]]:
         http = RobotsClient(self.base, self.cfg.get("delay_s", 3.0))
-        known = set(self.session.scalars(select(Property.url).where(Property.source == self.name)))
+        known = set(self.session.scalars(select(Property.url).where(Property.source == self.name, Property.custom.has_key("occupation"))))
         urls: list[str] = []
         for dept in self.app_cfg["departments"]:
             page = 1

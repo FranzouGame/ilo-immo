@@ -12,9 +12,12 @@ KN = app_config()["knowledge"]
 def test_auction_deposit_and_estimates():
     assert deposit(70000, KN) == 7000 and deposit(10000, KN) == 3000
     info = auction_info(70000, 56, 3000, "91", KN)
-    assert info["by_market"]["median"] == round(56 * 3000 * 0.51) and info["estimate"] == info["by_market"]["median"]
+    assert info["by_market"]["median"] == round(56 * 3000 * 50 / 100)  # tranche 30-80 k€ (59 %) ajustée Essonne (×51/60) = 50 %
+    assert info["estimate"] == info["by_market"]["median"] and info["deal_pct"] == 100 - info["paid_pct"]["median"]
     assert info["multiple"] == 2.1 and info["by_multiple"] == 147000
     assert auction_info(70000, None, None, "91", KN)["estimate"] == 147000  # repli sur le multiple de la mise à prix
+    occ = auction_info(70000, 56, 3000, "91", KN, occupied=True)
+    assert occ["estimate"] < info["estimate"] and occ["occupied"]  # un bien occupé part moins cher
 
 
 VIAGER = {"dossierId": 1, "urlPath": "/acheter/essonne-91/x/maison-4pieces-1", "bienTypeLabel": "maison", "venteTypeLabel": "Viager occupé",

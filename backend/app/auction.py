@@ -15,20 +15,34 @@ def multiple(reserve: float, kn: dict[str, Any]) -> float:
     return 1.0
 
 
-def auction_info(reserve: float, surface: float | None, market_ppm2: float | None, dept: str | None,
-                 kn: dict[str, Any]) -> dict[str, Any]:
-    """Deux estimations indépendantes : (1) % du prix voisin observé par département, (2) multiple de la mise à prix.
+def _bracket(reserve: float, kn: dict[str, Any]) -> dict[str, Any]:
+    rows = kn["auction_paid_pct_by_reserve"]
+    return next((r for r in rows if r["max"] is None or reserve < r["max"]), rows[-1])
 
-    L'estimation (1) est préférée quand le prix du secteur est connu. Ce sont des ordres de grandeur statistiques,
-    pas une prédiction : un bien occupé, en travaux ou très demandé peut sortir bien en dehors de la fourchette."""
-    ratios = kn["auction_price_pct_of_neighbors"].get(dept or "", kn["auction_price_pct_of_neighbors"]["default"])
+
+def auction_info(reserve: float, surface: float | None, market_ppm2: float | None, dept: str | None,
+                 kn: dict[str, Any], occupied: bool = False) -> dict[str, Any]:
+    """Deux estimations indépendantes : (1) % du prix voisin selon la tranche de mise à prix, ajusté au département
+    et à l'occupation, (2) multiple de la mise à prix. (1) est préférée quand le prix du secteur est connu.
+
+    Ordres de grandeur statistiques, pas une prédiction : un bien occupé, en travaux ou très demandé peut sortir bien
+    en dehors de la fourchette."""
+    pct = kn["auction_price_pct_of_neighbors"]
+    ratios = pct.get(dept or "", pct["default"])
+    scale = ratios["median"] / pct["default"]["median"]  # ex. Essonne : 51 / 60
+    b = _bracket(reserve, kn)
+    occ = kn["auction_occupied_factor"] if occupied else 1.0
+    paid = {k: round(b[k] * scale * occ) for k in ("q1", "median", "q3")}
     out: dict[str, Any] = {"reserve": reserve, "deposit": deposit(reserve, kn), "multiple": multiple(reserve, kn),
-                           "surenchere_pct": kn["auction_surenchere_pct"], "ratios": ratios}
+                           "surenchere_pct": kn["auction_surenchere_pct"], "ratios": ratios, "paid_pct": paid, "occupied": occupied}
     out["by_multiple"] = round(reserve * out["multiple"])
     if surface and market_ppm2:
-        base = surface * market_ppm2
-        out["by_market"] = {k: round(base * ratios[k] / 100) for k in ("q1", "median", "q3")}
+        value = surface * market_ppm2
+        out["market_value"] = round(value)
+        out["reserve_pct_of_value"] = round(100 * reserve / value)
+        out["by_market"] = {k: round(value * paid[k] / 100) for k in ("q1", "median", "q3")}
         out["estimate"] = out["by_market"]["median"]
+        out["deal_pct"] = 100 - paid["median"]
     else:
         out["estimate"] = out["by_multiple"]
     return out

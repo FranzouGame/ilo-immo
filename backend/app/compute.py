@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.auction import auction_info
 from app.config import app_config
 from app.connectors.common import lonlat, point_sql
-from app.market import reference_ppm2
+from app.market import comparable_ppm2, reference_ppm2
 from app.models import Building, Poi, Property, Sale, TerrainPoint
 from app.view import NearPoi, Obstacle, analyze_view, dpe_rank, local_projector, noise_score, view_quality, vis_a_vis
 
@@ -109,21 +109,28 @@ def compute_property(session: Session, prop: Property) -> dict[str, Any]:
         out["station_walk_m"] = round(st * vcfg["walk_detour_factor"])
     out["score_price"] = prop.price
     if prop.price and prop.surface:
-        ref = reference_ppm2(session, lon, lat, prop.insee, prop.type)
+        ref = comparable_ppm2(session, lon, lat, prop.insee, prop.type, prop.surface) or reference_ppm2(session, lon, lat, prop.insee, prop.type)
         tags = prop.tags or []
         if "enchère" in tags:  # mise à prix ≠ prix de vente : on estime le prix final probable (voir app/auction.py)
-            info = auction_info(prop.price, prop.surface, ref["median_ppm2"] if ref else None, (prop.insee or "")[:2], cfg["knowledge"])
+            info = auction_info(prop.price, prop.surface, ref["median_ppm2"] if ref else None, (prop.insee or "")[:2],
+                                cfg["knowledge"], (prop.custom or {}).get("occupation") == "occupé")
             out["auction"] = info
             out["score_price"] = info["estimate"]
+            out["deal_pct"] = info.get("deal_pct")
         elif ref:
             out["market_ref"] = ref
-            if "viager" not in tags:  # prix viager (valeur occupée) non comparable au marché libre
+            # viager : prix = valeur occupée, BRS : prix sans le terrain -> non comparables au marché libre
+            if "viager" not in tags and (prop.custom or {}).get("dispositif") != "brs":
                 ppm2 = prop.price / prop.surface
                 out["market_ppm2"] = round(ppm2)
                 out["market_gap_pct"] = round(100 * (ppm2 - ref["median_ppm2"]) / ref["median_ppm2"], 1)
+                out["deal_pct"] = round(-out["market_gap_pct"])
     elif prop.price and "enchère" in (prop.tags or []):
-        out["auction"] = auction_info(prop.price, None, None, (prop.insee or "")[:2], cfg["knowledge"])
+        out["auction"] = auction_info(prop.price, None, None, (prop.insee or "")[:2], cfg["knowledge"], (prop.custom or {}).get("occupation") == "occupé")
         out["score_price"] = out["auction"]["estimate"]
+    viager = (prop.custom or {}).get("viager")
+    if isinstance(viager, dict) and viager.get("decote_pct"):
+        out["deal_pct"] = viager["decote_pct"]  # décote d'occupation annoncée par l'agence
     return out
 
 

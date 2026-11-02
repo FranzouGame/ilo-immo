@@ -37,6 +37,9 @@ Un site d'annonces pour des offres **peu visibles sur les grands portails**, ave
 - **Score (0-100)** : « ⭐ Mes préférences » règle l'importance (0 à 5) de 7 critères (prix, surface, étage, vue/lumière, gare, balcon, bonne affaire) et vos valeurs cibles
   (budget idéal, surface, étage). Les annonces sont classées par défaut du meilleur au moins bon score ; une donnée manquante est neutre (jamais éliminatoire).
   Pour une enchère, c'est le **prix final estimé** qui est noté, pas la mise à prix.
+- **Trouver des perles** : 💎 *Pépites* (bon score + forte décote apparente, hors biens occupés), tri **Meilleures affaires**, 🆕 *Nouveautés* depuis votre dernière visite,
+  **baisses de prix** repérées d'un jour à l'autre, filtre **gare à pied**, indicateurs *Libre / Occupé* et date de visite pour les enchères, prix final probable des enchères.
+- **Décider** : **Comparer** jusqu'à 3 annonces, **simulateur de mensualité** (apport, taux, durée) sur chaque annonce, recherches **enregistrées** dans le navigateur, export **CSV**, **flux RSS** des nouveautés (site public).
 - **Fiche** : photos, caractéristiques, « Pourquoi ce score ? », encadré pédagogique propre à la catégorie (enchère : consignation, avocat, surenchère,
   prix final probable ; viager : bouquet, rente, décote ; vente interactive ; BRS/PSLA/TVA 5,5 %/vente HLM), lien vers l'annonce d'origine.
 - **Comprendre les ventes** : guide complet par type de vente, avec les chiffres réels des enchères (Essonne 51 %, Yvelines 55 % du prix voisin, étude MdB Scanner / data.gouv.fr).
@@ -70,11 +73,11 @@ ou `docker compose down -v` (efface les données ; les annonces se recollent ave
 ## Choix et limites (à lire)
 
 - **Sources d'annonces actives** (collecte quotidienne via `app/scraping.py` : robots.txt obligatoire, 1 requête / 3 s, User-Agent explicite, aucun contournement) :
-  `encheres` (Licitor, enchères judiciaires), `interactives` (36h-immo.com), `programmes` (proprietairemaintenant.fr : TVA 5,5 %, BRS, PSLA, prix maîtrisé, vente HLM),
+  `encheres` (Licitor, enchères judiciaires), `interactives` (36h-immo.com), `immonot` (annonces des études notariales), `programmes` (proprietairemaintenant.fr : TVA 5,5 %, BRS, PSLA, prix maîtrisé, vente HLM),
   `viager` (Renée Costes). **Vérifiez les CGU de chaque site** avant usage durable : c'est votre responsabilité. Les photos sont affichées par lien direct vers la source.
 - Une annonce qui disparaît de sa source est masquée (`gone`) ; une enchère dont la date est passée aussi.
 - Prix : mise à prix (enchère), prix de départ (interactive), « à partir de » (programmes), valeur occupée (viager) - jamais présentés comme un prix de vente classique.
-- **Non collectés** : annonces des notaires (immobilier.notaires.fr : affichage par JavaScript / API interne), encheres-publiques.com (accès bloqué aux robots), Agorastore et
+- **Non collectés** : immobilier.notaires.fr (affichage par JavaScript / API interne ; remplacé par Immonot), encheres-publiques.com (accès bloqué aux robots), Agorastore et
   Avoventes (JavaScript), Interenchères (recherche interdite par robots.txt), portails commerciaux. Piste pour les notaires : alertes e-mail du site.
 - Sitadel ne fournit pas de coordonnées : seuls les projets ≥ 10 logements avec adresse sont géocodés (BAN).
 - DVF : seules les mutations « Vente » à un seul local sont retenues (pas de ventes multi-lots ambiguës).

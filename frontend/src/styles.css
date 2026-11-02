@@ -40,3 +40,13 @@ header .muted { margin-right:auto; } .logo { font-size:1.6rem; color:var(--acc);
 .guide { max-width:860px; margin:10px auto; } .guide details { background:var(--card); border:1px solid var(--line); border-radius:12px; margin:10px 0; padding:10px 16px; } .guide summary { cursor:pointer; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; }
 .guide summary small { color:var(--mut); flex-basis:100%; margin-left:34px; } .gi { font-size:1.4rem; } .gblock h4 { margin:14px 0 4px; } .gblock ul { padding-left:20px; display:flex; flex-direction:column; gap:5px; } .gblock table { margin:8px 0; }
 .foot { margin-top:30px; padding:14px 0; border-top:1px solid var(--line); color:var(--mut); font-size:.78rem; line-height:1.5; }
+.badge.gem { left:auto; right:44px; background:#7c3aed; } .tag.ok { background:rgba(27,158,90,.15); color:#13774a; } .tag.warn { background:rgba(224,107,0,.15); color:#b45309; } .tag.deal { background:rgba(37,99,235,.12); color:#1d4ed8; } .tag.gem { background:rgba(124,58,237,.15); color:#6d28d9; }
+.chg { font-size:.78rem; font-weight:700; margin-left:6px; } .chg.down { color:#13774a; } .chg.up { color:#c0392b; }
+.cardfoot { display:flex; justify-content:space-between; align-items:center; margin-top:4px; } .cmp { font-size:.78rem; color:var(--mut); display:flex; gap:4px; align-items:center; }
+.cmpbar { position:fixed; left:50%; bottom:16px; transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:8px 16px; border-radius:99px; display:flex; gap:12px; align-items:center; z-index:9; box-shadow:0 4px 18px rgba(0,0,0,.3); } .cmpbar .link { color:var(--bg); }
+.scroll { overflow:auto; } .cmptable { min-width:560px; } .cmptable th { white-space:nowrap; font-weight:600; vertical-align:top; } .cmptable td { min-width:150px; }
+.saved { flex-wrap:wrap; margin-top:10px; } .saved input { max-width:230px; } .savedchip { display:inline-flex; gap:2px; align-items:center; padding:0 8px; }
+.finbox { background:var(--bg); border-radius:8px; padding:6px 14px; } .finbox summary { cursor:pointer; } .finbox ul { padding-left:18px; }
+.photo.nophoto { height:78px; font-size:2.2rem; } .fav { font-size:1rem; line-height:1; display:grid; place-items:center; } .price { font-size:1.1rem; }
+.dialog p { margin:4px 0; } .dialog h2 { margin:4px 0; padding-right:40px; } .toolbar { flex-wrap:wrap; } .toolbar b { margin-right:auto; } .toolbar select { margin-left:0; }
+@media (max-width:600px) { .grid-list { grid-template-columns:1fr; } .prefgrid { grid-template-columns:1fr; } }

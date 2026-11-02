@@ -26,7 +26,13 @@ export default function FilterBar({ departments, f, set, sources, reset }: Props
       <Num label="Surface min (m²)" value={f.surface_min} placeholder="Toutes" onChange={(v) => up('surface_min', v)} />
       <Num label="Pièces min" value={f.rooms_min} placeholder="Toutes" onChange={(v) => up('rooms_min', v)} />
       <Num label="Étage min" value={f.floor_min} placeholder="Tous" onChange={(v) => up('floor_min', v)} />
+      <label className="fld">Gare à pied
+        <select value={f.station_max} onChange={(e) => up('station_max', e.target.value)}>
+          <option value="">Peu importe</option><option value="10">≤ 10 min</option><option value="15">≤ 15 min</option><option value="20">≤ 20 min</option>
+        </select></label>
       <div className="checks">
+        <label><input type="checkbox" checked={f.fresh} onChange={(e) => up('fresh', e.target.checked)} /> 🆕 Nouveautés</label>
+        <label><input type="checkbox" checked={f.gems} onChange={(e) => up('gems', e.target.checked)} /> 💎 Pépites</label>
         <label><input type="checkbox" checked={f.balcony} onChange={(e) => up('balcony', e.target.checked)} /> Balcon / terrasse</label>
         <label><input type="checkbox" checked={f.elevator} onChange={(e) => up('elevator', e.target.checked)} /> Ascenseur</label>
         <label><input type="checkbox" checked={f.favorites} onChange={(e) => up('favorites', e.target.checked)} /> ★ Mes favoris</label>

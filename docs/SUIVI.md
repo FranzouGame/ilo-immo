@@ -20,6 +20,10 @@
 - Disparition d'annonces gérée (`gone`), enchères passées masquées.
 - Testé en réel : programmes, viager, API listings. Non testé visuellement (pas de navigateur dans l'environnement).
 
+## Trouver des perles (2026-11-02)
+- Source Immonot (notaires) : 53 annonces 91/78. Enchères : occupation libre/occupé + date de visite ; estimation du prix final par tranche de mise à prix, département et occupation.
+- Décote apparente, 💎 pépites, tri « meilleures affaires », nouveautés depuis la dernière visite, baisses de prix (historique), filtre gare, comparateur, simulateur de mensualité, recherches enregistrées, CSV, RSS.
+
 ## À faire
 - Vérifier le rendu à l'écran (cartes, préférences, guide) ; ajuster les textes pédagogiques avec un professionnel (notaire/avocat) avant tout usage public.
 - Sources écartées (voir README) ; avoventes.fr et résultats passés de Licitor (prix réels d'adjudication) seraient des ajouts possibles.

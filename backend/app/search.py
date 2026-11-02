@@ -21,14 +21,17 @@ def kind_of(p: Property) -> str:
         return "viager"
     if "vente interactive" in tags:
         return "interactive"
-    if p.source in ("programmes",):
+    if p.source == "programmes":
         return "aide"
+    if "notaire" in tags:
+        return "notaire"
     return "autre"
 
 
 def prop_dict(p: Property) -> dict[str, Any]:
     d: dict[str, Any] = {c: getattr(p, c) for c in COLUMNS}
     d["computed"] = p.computed or {}
+    d["price_history"] = p.price_history or []
     ll = lonlat(p)
     d["lon"], d["lat"] = ll if ll else (None, None)
     d["kind"] = kind_of(p)

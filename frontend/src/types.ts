@@ -1,4 +1,9 @@
 export interface AuctionInfo {
+  paid_pct: { median: number; q1: number; q3: number }
+  occupied: boolean
+  market_value?: number
+  reserve_pct_of_value?: number
+  deal_pct?: number
   reserve: number
   deposit: number
   multiple: number
@@ -10,6 +15,7 @@ export interface AuctionInfo {
 }
 export interface Computed {
   auction?: AuctionInfo
+  deal_pct?: number
   score_price?: number
   vis_a_vis?: { score: number; explanation: string }
   view_quality?: { score: number; reasons: string[] }
@@ -47,7 +53,8 @@ export interface Property {
   lat: number | null
   price_m2: number | null
   created_at: string
-  kind: 'enchere' | 'interactive' | 'viager' | 'aide' | 'autre'
+  kind: 'enchere' | 'interactive' | 'viager' | 'aide' | 'notaire' | 'autre'
+  price_history: { date: string; price: number }[]
   custom: Record<string, unknown>
   score: number
   breakdown: { key: string; label: string; value: unknown; score: number | null; manual: boolean; weight: number }[]
@@ -61,6 +68,9 @@ export interface Filters {
   surface_min: string
   rooms_min: string
   floor_min: string
+  station_max: string
+  fresh: boolean
+  gems: boolean
   balcony: boolean
   elevator: boolean
   favorites: boolean

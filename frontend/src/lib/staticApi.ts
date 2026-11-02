@@ -1,6 +1,7 @@
 /** Mode « site statique » (GitHub Pages) : les filtres et le score sont calculés dans le navigateur.
  *  Doit rester cohérent avec backend/app/simple_score.py et backend/app/scoring.py. */
 import type { Filters, Property, ScoreDefaults } from '../types'
+import type { Fees, Finance } from './finance'
 
 export const STATIC = import.meta.env.VITE_STATIC === '1'
 
@@ -15,7 +16,7 @@ export interface Crit {
 }
 export interface StaticData {
   generated_at: string
-  config: { departments: { code: string; name: string }[]; department_name: string; map: { center: [number, number]; zoom: number }; criteria: Crit[] }
+  config: { departments: { code: string; name: string }[]; department_name: string; map: { center: [number, number]; zoom: number }; criteria: Crit[]; finance: Finance; fees_pct: Fees }
   defaults: ScoreDefaults
   items: Property[]
 }
@@ -128,6 +129,9 @@ export function listings(data: StaticData, f: Filters): { items: Property[]; tot
         const m = num(min)
         if (m != null && !(v != null && v >= m)) return false
       }
+      const sm = num(f.station_max)
+      const walk = p.computed.station_walk_m
+      if (sm != null && !(walk != null && walk <= sm * 80)) return false
       if (f.balcony && p.balcony !== true) return false
       if (f.elevator && p.elevator !== true) return false
       if (f.source.length && !f.source.includes(p.source)) return false
@@ -140,6 +144,7 @@ export function listings(data: StaticData, f: Filters): { items: Property[]; tot
     ppm2: (a, b) => (a.price_m2 ?? Infinity) - (b.price_m2 ?? Infinity),
     surface: (a, b) => (b.surface ?? -Infinity) - (a.surface ?? -Infinity),
     recent: (a, b) => b.created_at.localeCompare(a.created_at),
+    deal: (a, b) => (b.computed.deal_pct ?? -Infinity) - (a.computed.deal_pct ?? -Infinity),
   }
   items.sort(key[f.sort] ?? ((a, b) => b.score - a.score))
   const sources = [...new Set(data.items.map((p) => p.source))].sort()

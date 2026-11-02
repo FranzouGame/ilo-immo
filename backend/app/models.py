@@ -49,6 +49,7 @@ class Property(Base):
     manual_vis_a_vis: Mapped[int | None] = mapped_column(SmallInteger)  # 0-10 (10 = aucun vis-à-vis)
     photos: Mapped[list[str]] = mapped_column(JSONB, default=list)
     computed: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    price_history: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")  # [{date, price}] anciens prix
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # dernière fois vue chez la source
     gone: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")  # retirée de la source
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=_now())

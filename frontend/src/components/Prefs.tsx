@@ -1,6 +1,7 @@
+import type { Finance } from '../lib/finance'
 import type { Filters, ScoreDefaults } from '../types'
 
-interface Props { f: Filters; set: (f: Filters) => void; defaults: ScoreDefaults | null }
+interface Props { f: Filters; set: (f: Filters) => void; defaults: ScoreDefaults | null; fin: Finance; setFin: (f: Finance) => void }
 
 const LEVELS = ['Ignoré', 'Un peu', 'Moyen', 'Important', 'Très important', 'Essentiel']
 const ROWS: { key: string; label: string; hint: string }[] = [
@@ -13,7 +14,7 @@ const ROWS: { key: string; label: string; hint: string }[] = [
   { key: 'deal', label: 'Bonne affaire', hint: 'Prix au m² sous les ventes réelles du secteur' },
 ]
 
-export default function Prefs({ f, set, defaults }: Props) {
+export default function Prefs({ f, set, defaults, fin, setFin }: Props) {
   const wk = (k: string) => `w_${k}` as keyof Filters
   const val = (k: string): number => {
     const v = f[wk(k)] as string
@@ -36,6 +37,12 @@ export default function Prefs({ f, set, defaults }: Props) {
         <label className="fld">Surface souhaitée (m²)<input type="number" value={f.surface_target} placeholder={String(defaults?.surface ?? '')} onChange={(e) => set({ ...f, surface_target: e.target.value })} /></label>
         <label className="fld">Étage souhaité (min)<input type="number" value={f.floor_target} placeholder={String(defaults?.floor ?? '')} onChange={(e) => set({ ...f, floor_target: e.target.value })} /></label>
         <button className="link" onClick={reset}>Remettre par défaut</button>
+      </div>
+      <div className="row targets">
+        <label className="fld">Apport (€)<input type="number" value={fin.down_payment} onChange={(e) => setFin({ ...fin, down_payment: Number(e.target.value) })} /></label>
+        <label className="fld">Taux (%)<input type="number" step="0.1" value={fin.rate_pct} onChange={(e) => setFin({ ...fin, rate_pct: Number(e.target.value) })} /></label>
+        <label className="fld">Durée (ans)<input type="number" value={fin.years} onChange={(e) => setFin({ ...fin, years: Number(e.target.value) })} /></label>
+        <span className="hint">Simulateur : mensualité affichée sur chaque annonce (hors assurance).</span>
       </div>
       <p className="hint">Une information manquante ne pénalise pas une annonce (note neutre). Pour les enchères, le prix pris en compte est le prix final estimé, pas la mise à prix.</p>
     </details>

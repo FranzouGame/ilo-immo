@@ -17,3 +17,14 @@ def test_parse_ad():
 
 def test_parse_ad_ignores_non_housing():
     assert parse_ad(HTML.replace("Un appartement", "Parts sociales de la SCI"), "u") is None
+
+
+def test_occupation_and_visite():
+    from app.connectors.listings.encheres import occupation
+    assert occupation("les biens sont, semble-t-il, inoccupés") == "libre"
+    assert occupation("bien occupé par le propriétaire") == "occupé"
+    assert occupation("loué en vertu d'un bail") == "occupé"
+    assert occupation("un appartement de trois pièces") == "inconnue"
+    html = HTML.replace('<p class="Map">', '<p class="Visits">Visite organisée par SELARL X le lundi 16 novembre 2026 de 10h30 à 11h30</p><p class="Map">')
+    r = parse_ad(html.replace("Un appartement", "Un appartement occupé"), "u")
+    assert r and r["custom"]["visite"] == "lundi 16 novembre 2026 de 10h30 à 11h30" and r["custom"]["occupation"] == "occupé"

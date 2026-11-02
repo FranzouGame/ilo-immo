@@ -43,6 +43,28 @@ export const GUIDE: GuideEntry[] = [
         "Les frais de notaire habituels s'appliquent comme pour toute vente de bien ancien.",
         "Vérifiez dans le compromis les conditions suspensives (prêt notamment)." ] },
     ] },
+  { id: 'notaire', icon: '🏛️', title: "Annonces de notaires", tagline: "Des biens vendus par l'intermédiaire d'une étude notariale, souvent hors des grands portails.",
+    blocks: [
+      { h: "C'est quoi ?", p: "Certaines études notariales vendent elles-mêmes des biens (successions, ventes de particuliers) et les publient sur leur portail. Le notaire rédige le compromis et l'acte : c'est une vente classique, entre particuliers, avec un interlocuteur neutre." },
+      { h: 'Ce que ça change pour vous', list: [
+        "Prix négociable comme dans toute vente de gré à gré.",
+        "Frais de notaire habituels dans l'ancien (de l'ordre de 7 à 8 % du prix), à ajouter au prix affiché.",
+        "Souvent des successions : le bien peut demander des travaux, mais les héritiers cherchent parfois à vendre vite." ] },
+      { h: 'Avant de faire une offre', list: [
+        "Demander le dossier de diagnostics (DPE, électricité, plomb, amiante…), les charges de copropriété et la taxe foncière.",
+        "Vérifier le plan local d'urbanisme et les éventuels projets autour (permis de construire).",
+        "Faire une offre écrite avec condition suspensive de prêt." ] },
+    ] },
+  { id: 'gems', icon: '💎', title: 'Comment sont repérées les « pépites » et les bonnes affaires ?', tagline: 'Une règle simple et transparente, pas une promesse.',
+    blocks: [
+      { h: 'La décote apparente', list: [
+        "Annonce classique : écart entre le prix au m² et la médiane des ventes réelles comparables (même type, surface à ±35 %, dans environ 1,5 km - base DVF des notaires).",
+        "Enchère : écart entre la valeur du secteur et le prix final probable (statistiques des enchères de votre département, ajustées à la tranche de mise à prix et à l'occupation).",
+        "Viager : décote d'occupation annoncée par l'agence (valeur libre moins valeur occupée).",
+        "Accession aidée (BRS, PSLA…) : pas de décote affichée, ces prix reposent sur des règles particulières." ] },
+      { h: 'La pépite', p: "Une annonce est marquée 💎 quand son score (selon vos préférences) est d'au moins 70 et que sa décote apparente atteint 30 % ou plus. Les viagers et l'accession aidée n'en reçoivent jamais (leur décote vient de la formule elle-même), et une enchère n'en reçoit que si elle est indiquée libre d'occupation. C'est un point de départ pour regarder de près, pas un conseil d'achat : vérifiez l'état du bien, les charges et les diagnostics." },
+      { h: 'Les limites', list: ["Les prix du secteur sont des médianes : un bien atypique (petite surface, rez-de-chaussée, mauvais état) peut valoir moins.", "Une enchère très demandée peut dépasser largement l'estimation."] },
+    ] },
   { id: 'viager', icon: '⏳', title: 'Viager', tagline: 'Vous achetez en payant un capital puis une rente à vie au vendeur.',
     blocks: [
       { h: "C'est quoi ?", p: "L'acheteur (débirentier) paie un bouquet au départ, puis une rente mensuelle au vendeur (crédirentier) jusqu'à son décès. Le prix total dépend donc de la durée de vie du vendeur : c'est un contrat avec aléa." },

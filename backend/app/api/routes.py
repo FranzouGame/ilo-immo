@@ -10,7 +10,7 @@ from fastapi.responses import Response
 from geoalchemy2.shape import from_shape
 from pydantic import BaseModel, ConfigDict
 from shapely.geometry import Point
-from sqlalchemy import func, select, text
+from sqlalchemy import Float, func, select, text
 from sqlalchemy.orm import Session
 
 from app import alerts, auth
@@ -50,7 +50,8 @@ def get_config() -> dict[str, Any]:
     c = app_config()
     return {"departments": [{"code": d["code"], "name": d["name"]} for d in c["departments"]],
             "department_name": " · ".join(d["name"] for d in c["departments"]), "map": c["map"],
-            "criteria": c["scoring"]["criteria"], "presets": c["presets"], "view": c["view"]}
+            "criteria": c["scoring"]["criteria"], "presets": c["presets"], "view": c["view"], "finance": c["finance"],
+            "fees_pct": c["knowledge"]["fees_pct"]}
 
 
 class PropertyIn(BaseModel):
@@ -102,7 +103,7 @@ def _apply(p: Property, data: PropertyIn) -> None:
 
 @router.get("/listings")
 def listings(db: Db, q: str | None = None, dept: str | None = None, type: str | None = None, price_max: float | None = None,
-             surface_min: float | None = None, rooms_min: int | None = None, floor_min: int | None = None,
+             surface_min: float | None = None, station_max: int | None = None, rooms_min: int | None = None, floor_min: int | None = None,
              balcony: bool = False, elevator: bool = False, favorites: bool = False, hidden: bool = False,
              source: Annotated[list[str] | None, Query()] = None, sort: str = "score",
              budget: float | None = None, surface_target: float | None = None, floor_target: float | None = None,
@@ -124,6 +125,8 @@ def listings(db: Db, q: str | None = None, dept: str | None = None, type: str | 
             cond.append(col >= val)
     if price_max is not None:
         cond.append(Property.price <= price_max)
+    if station_max is not None:  # minutes à pied (80 m/min) jusqu'à une gare
+        cond.append(Property.computed["station_walk_m"].astext.cast(Float) <= station_max * 80)
     if type:
         cond.append(Property.type == type)
     if balcony:
@@ -145,7 +148,8 @@ def listings(db: Db, q: str | None = None, dept: str | None = None, type: str | 
                             "price_desc": lambda r: (r["price"] is None, -(r["price"] or 0)),
                             "ppm2": lambda r: (r["price_m2"] is None, r["price_m2"] or 0),
                             "surface": lambda r: (r["surface"] is None, -(r["surface"] or 0)),
-                            "recent": lambda r: -r["created_at"].timestamp()}
+                            "recent": lambda r: -r["created_at"].timestamp(),
+                            "deal": lambda r: (r["computed"].get("deal_pct") is None, -(r["computed"].get("deal_pct") or 0))}
     items.sort(key=keyf.get(sort, lambda r: -r["score"]))
     total = db.scalar(select(func.count()).select_from(Property).where(*cond)) or 0
     sources = sorted(db.scalars(select(Property.source).where(Property.gone.is_(False)).distinct()).all())
